@@ -18,6 +18,10 @@ import VerifyEmailPage from "../../features/auth/pages/VerifyEmailPage";
 import ForgotPasswordPage from "../../features/auth/pages/ForgotPasswordPage";
 import ResetPasswordPage from "../../features/auth/pages/ResetPasswordPage";
 import VerifyTwoFactorPage from "../../features/auth/pages/VerifyTwoFactorPage";
+import UserProfilePage from "../../features/users/pages/UserProfilePage";
+import SearchUsersPage from "../../features/users/pages/SearchUsersPage";
+import FollowingPage from "../../features/users/pages/FollowingPage";
+import FollowersPage from "../../features/users/pages/FollowersPage";
 
 const router = createBrowserRouter([
   {
@@ -72,6 +76,22 @@ const router = createBrowserRouter([
           {
             path: "/profile",
             element: <ProfilePage />,
+          },
+          {
+            path: "/users",
+            element: <SearchUsersPage />,
+          },
+          {
+            path: "/users/:userId/followers",
+            element: <FollowersPage />,
+          },
+          {
+            path: "/users/:userId/following",
+            element: <FollowingPage />,
+          },
+          {
+            path: "/users/:userId",
+            element: <UserProfilePage />,
           },
         ],
       },

@@ -1,12 +1,12 @@
-function Avatar({ image }) {
+function Avatar({ src , classname }) {
   return (
     <img
       src={
-        image ||
+        src ||
         "https://placehold.co/100x100"
       }
       alt="Profile"
-      className="h-10 w-10 rounded-full object-cover"
+      className={`h-10 w-10 rounded-full object-cover ${classname}`}
     />
   );
 }

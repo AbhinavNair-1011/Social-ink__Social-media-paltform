@@ -124,7 +124,7 @@ const { mutate: sendVerification } = useResendVerification();
       error={errors.dob}
     />
 
-    <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-purple-50 p-5 shadow-sm">
+    <div className="rounded-2xl border border-indigo-100 bg-linear-to-r from-indigo-50 via-white to-purple-50 p-5 shadow-sm">
       <label className="flex cursor-pointer items-start gap-4">
         <input
           type="checkbox"

@@ -32,7 +32,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
+    dob: {
+      type: String,
+},
     profileImage: {
       type: String,
       default: "",

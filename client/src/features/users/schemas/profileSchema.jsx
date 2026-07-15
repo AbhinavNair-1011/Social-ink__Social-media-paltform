@@ -1,13 +1,25 @@
 import { z } from "zod";
 
-export const profileSchema = z.object({
+
+
+export const updateProfileSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(3, "Name must be at least 3 characters."),
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name cannot exceed 50 characters"),
 
-  bio: z
+  userName: z
     .string()
     .trim()
-    .max(250, "Bio cannot exceed 250 characters."),
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username cannot exceed 30 characters")
+    .regex(
+      /^[a-zA-Z0-9_.]+$/,
+      "Username can only contain letters, numbers, underscore and period",
+    ),
+
+  bio: z.string().trim().max(250, "Bio cannot exceed 250 characters"),
+
+  dob: z.string(),
 });
