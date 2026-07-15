@@ -1,8 +1,15 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import toast from "react-hot-toast";
+
 import { loginUser } from "../api/authApi";
 
-export function useLogin() {
+function useLogin() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: loginUser,
   });
 }
+
+export { useLogin };
