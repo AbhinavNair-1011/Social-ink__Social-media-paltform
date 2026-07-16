@@ -1,5 +1,31 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { NavLink } from "react-router-dom";
+
+
 function Sidebar({ isOpen, onClose }) {
+
+const queryClient= useQueryClient()
+
+function handleProfileClick(){
+
+  queryClient.invalidateQueries({
+    queryKey:["my-posts"]
+  });
+   queryClient.invalidateQueries({
+    queryKey:["profile"]
+  });
+  onClose()
+
+}
+function handleFeedClick(){
+
+  queryClient.invalidateQueries({
+    queryKey:["feed"]
+  });
+  onClose()
+
+}
+
   const getNavClass = ({ isActive }) =>
     `flex items-center gap-3 rounded-xl px-3 py-3 transition ${
       isActive
@@ -32,7 +58,7 @@ function Sidebar({ isOpen, onClose }) {
 
       <NavLink
         to="/profile"
-        onClick={onClose}
+        onClick={handleProfileClick}
         className={({ isActive }) =>
           `flex items-center gap-3 rounded-xl px-3 py-3 transition ${
             isActive
@@ -59,7 +85,7 @@ function Sidebar({ isOpen, onClose }) {
         <span>Profile</span>
       </NavLink>
 
-      <NavLink to="/feed" onClick={onClose} className={getNavClass}>
+      <NavLink to="/feed" onClick={handleFeedClick} className={getNavClass}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"

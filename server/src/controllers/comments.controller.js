@@ -1,7 +1,7 @@
 const Comment = require("../models/comment.model");
 const Post = require("../models/post.model");
 
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 async function createComment(req, res) {
   const { postId } = req.params;

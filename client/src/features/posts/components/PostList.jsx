@@ -8,8 +8,8 @@ import PostSkeleton from "./PostLoader";
 import PostLoader from "./PostLoader";
 
 function PostList() {
-  
-  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =  useInfiniteFeed();
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useInfiniteFeed();
   const loadMoreRef = useRef(null);
   const pages = data?.pages || [];
 
@@ -26,6 +26,7 @@ function PostList() {
 
     return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
   if (isLoading) {
     return (
       <>
@@ -36,22 +37,21 @@ function PostList() {
     );
   }
 
-  if (pages.length === 0) {
-    return (
-      <EmptyState
-        title="No posts yet"
-        description="Create the first post and start the conversation."
-      />
-    );
-  }
-
   return (
     <>
-      <div className="space-y-4">
-        {pages.map((page) =>
-          page.posts.map((post) => <PostCard key={post._id} post={post} />),
-        )}
-      </div>
+      {pages ? (
+        <div className="space-y-4">
+          {pages.map((page) =>
+            page.posts.map((post) => <PostCard key={post._id} post={post} querykey={["feed"]} />),
+          )}
+        </div>
+      ) : (
+        <EmptyState
+          title="No posts yet"
+          description="Create the first post and start the conversation."
+        />
+      )}
+
       <div ref={loadMoreRef} />
       {isFetchingNextPage && <Loader />}
     </>

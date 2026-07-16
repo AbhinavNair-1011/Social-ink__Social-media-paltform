@@ -8,10 +8,11 @@ import Avatar from "../../../shared/components/Avatar";
 
 function CommentItem({ comment , postId}) {
   const [isEditing, setIsEditing] = useState(false);
+  console.log(comment)
   return (
   <div className="flex gap-3 ">
   <Avatar
-    image={comment.userId.profileImage}
+    src={comment.userId.profileImage}
     className="h-10 w-10"
   />
 

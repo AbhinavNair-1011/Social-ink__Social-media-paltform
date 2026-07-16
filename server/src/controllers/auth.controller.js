@@ -4,7 +4,7 @@ const User = require("../models/user.model");
 
 const Session = require("../models/session.model");
 
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 const {
   createAuthenticatedSession,

@@ -1,5 +1,5 @@
 const User = require("../models/user.model");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 const Follow = require("../models/follow.model");
 const Post = require("../models/post.model");
 const uploadToS3 = require("../utils/uploadToS3");

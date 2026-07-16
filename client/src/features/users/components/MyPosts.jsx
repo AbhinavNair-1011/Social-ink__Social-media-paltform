@@ -5,6 +5,7 @@ import EmptyState from "../../../shared/components/EmptyState";
 import { useInfiniteMyPosts } from "../../posts/hooks/useInfiniteMyPosts";
 
 import ProfilePostCard from "./ProfilePostCard";
+import toast from "react-hot-toast";
 
 function MyPosts() {
   const [view, setView] = useState("images");
@@ -37,10 +38,11 @@ function MyPosts() {
   }, [posts.length, hasNextPage]);
 
   useEffect(() => {
-    if (posts.length === 0) {
+    if (!isLoading && view === "images" && posts.length === 0) {
+      toast.error("No image posts")
       setView("text");
     }
-  }, []);
+  }, [isLoading, posts.length, view]);
 
   if (isLoading) {
     return <Loader />;
@@ -55,14 +57,14 @@ function MyPosts() {
     );
   }
 
+  
+
   return (
     <section className="mt-8">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-bold">Posts</h2>
 
         <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-      
-
           <button
             onClick={() => setView("text")}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
@@ -87,23 +89,23 @@ function MyPosts() {
         </div>
       </div>
 
-    
-        <div
-          className={
-            view === "images"
-              ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-              : "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
-          }
-        >
-          {posts.map((post) => (
-            <ProfilePostCard
-              key={post._id}
-              post={post}
-              querykey={["my-posts",view]}
-            />
-          ))}
-        </div>
-   
+      <div
+        className={
+          view === "images"
+            ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+            : "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+        }
+      >
+        {posts?.length===0 && <EmptyState title={`0 posts`} description={`No posts in ${view} yet`}/>}
+        {posts.map((post) => (
+          <ProfilePostCard
+            key={post._id}
+            post={post}
+            querykey={["my-posts", view]}
+          />
+        ))}
+      </div>
+
       <div ref={loadMoreRef} />
 
       {isFetchingNextPage && <Loader />}

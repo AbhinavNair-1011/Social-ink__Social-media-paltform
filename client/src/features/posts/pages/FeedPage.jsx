@@ -4,7 +4,6 @@ import CreatePostForm from "../components/CreatePostForm";
 import PostList from "../components/PostList";
 import Pagination from "../components/Pagination";
 
-import { useFeed } from "../hooks/useFeed";
 
 function FeedPage() {
 

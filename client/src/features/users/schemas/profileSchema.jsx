@@ -16,7 +16,7 @@ export const updateProfileSchema = z.object({
     .max(30, "Username cannot exceed 30 characters")
     .regex(
       /^[a-zA-Z0-9_.]+$/,
-      "Username can only contain letters, numbers, underscore and period",
+      "Username can only contain letters, numbers, underscore and period, no space",
     ),
 
   bio: z.string().trim().max(250, "Bio cannot exceed 250 characters"),

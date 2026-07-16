@@ -65,7 +65,7 @@ function AuthLayout() {
     </div>
   </section>
 
-  <section className="flex items-center justify-center bg-linear-to-b from-slate-300 to-slate-400  p-8">
+  <section className="flex items-center justify-center bg-linear-to-b from-slate-300 to-slate-400  p-2">
     <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-slate-100 p-10 shadow-2xl shadow-slate-200/60">
       <Outlet />
     </div>

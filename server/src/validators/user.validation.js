@@ -1,5 +1,5 @@
 const { z } = require("zod");
-const objectIdSchema = require("./ObjectIDSchema");
+const objectIdSchema = require("./objectIdSchema")
 
 const updateProfileSchema = z
   .object({

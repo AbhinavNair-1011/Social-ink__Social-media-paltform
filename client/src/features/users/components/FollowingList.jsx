@@ -22,11 +22,19 @@ function FollowingPage({ userId }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-3xl font-bold">Following</h1>
+  <div className="mx-auto max-w-4xl">
+  <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h1 className="text-3xl font-bold text-slate-800">Following</h1>
 
-      <UserList users={data} alternate={"Not Following Anyone "} />
-    </div>
+    <p className="mt-2 text-sm text-slate-500">
+      People this account follows.
+    </p>
+  </div>
+
+  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <UserList users={data} alternate="Not Following Anyone" />
+  </div>
+</div>
   );
 }
 

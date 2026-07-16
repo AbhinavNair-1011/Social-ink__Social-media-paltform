@@ -14,6 +14,7 @@ function SearchUsersPage() {
 
   const { data: users = [], isLoading } = useSearchUsers(search);
 
+  
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
@@ -26,7 +27,7 @@ function SearchUsersPage() {
 
       <Input
         id="search"
-        label="Search"
+        
         placeholder="Search users..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -37,7 +38,7 @@ function SearchUsersPage() {
       {!isLoading && search && users.length === 0 && (
         <EmptyState title="No users found" description="Try another search." />
       )}
-
+  
       <div className="space-y-3">
         {users.map((user) => (
             <UserCard user={user} />

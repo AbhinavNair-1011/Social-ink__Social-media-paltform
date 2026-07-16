@@ -137,7 +137,7 @@ const { mutate: sendVerification } = useResendVerification();
             Enable Two-Factor Authentication
           </h3>
 
-          <p className="mt-1 text-sm leading-6 text-slate-600">
+          <p className="mt-1 text-sm leading-6 text-slate-600 hidden md:block">
             Add an extra layer of security to your account.
             Every login will require a one-time verification
             code sent to your email.

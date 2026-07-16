@@ -38,7 +38,7 @@
                   onClick={()=>setShowPost(true)}
                     src={post.imageUrl}
                     alt="Post"
-                    className="mb-3 h-48 w-full rounded-lg object-fill"
+                    className="mb-3 h-48 w-full rounded-lg object-contain"
                   />
                 )}
 

@@ -25,7 +25,7 @@ function PostCard({ post, page, querykey }) {
         <EditPostForm
           post={post}
           setIsEditing={setIsEditing}
-          querykey={["feed"]}
+          querykey={querykey}
         />
       ) : (
         <>
@@ -50,17 +50,17 @@ function PostCard({ post, page, querykey }) {
         setIsEditing={setIsEditing}
         onLikeSuccess={() =>
           queryClient.invalidateQueries({
-            queryKey: ["feed", page],
+            queryKey: ["feed"],
           })
         }
         onDeleteSuccess={() =>
           queryClient.invalidateQueries({
-            queryKey: ["feed", page],
+            queryKey: ["feed"],
           })
         }
       />
 
-      {showComments && <CommentList postId={post._id} querykey={["feed"]} />}
+      {showComments && <CommentList postId={post._id} querykey={querykey} />}
       {showPost && (
         <PostModal
           post={post}

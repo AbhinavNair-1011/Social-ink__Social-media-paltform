@@ -1,6 +1,6 @@
 const Like = require("../models/like.model");
 const Post = require("../models/post.model");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 const uploadToS3 = require("../utils/uploadToS3");
 
 async function createPost(req, res) {

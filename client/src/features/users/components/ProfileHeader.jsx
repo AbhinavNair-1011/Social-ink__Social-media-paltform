@@ -12,9 +12,9 @@ function ProfileHeader({ user, onEdit, onImageChange, children }) {
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="h-24 bg-gradient-to-r from-indigo-600 via-blue-500 to-purple-600" />
 
-      <div className="px-6 pb-6">
+      <div className="px-2 md:px-6 pb-6">
         <div className="-mt-24 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex items-end gap-4">
+          <div className="flex justify-start items-end gap-4">
             <div className="relative">
               <Avatar
                 src={user.profileImage}
@@ -56,7 +56,7 @@ function ProfileHeader({ user, onEdit, onImageChange, children }) {
           {user.bio || "Tell people a little about yourself."}
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-700">
+        <div className="mt-7 flex flex-wrap gap-3 text-[11px] md:text-sm text-slate-700 justify-start">
           {user.email && (
             <span className="rounded-full bg-slate-100 px-3 py-1">
               {user.email}
@@ -68,7 +68,7 @@ function ProfileHeader({ user, onEdit, onImageChange, children }) {
           </span>
 
           <span className="rounded-full bg-slate-100 px-3 py-1">
-            Joined {new Date(user.createdAt).toLocaleDateString()}
+            Joined on {new Date(user.createdAt).toLocaleDateString()}
           </span>
         </div>
       </div>

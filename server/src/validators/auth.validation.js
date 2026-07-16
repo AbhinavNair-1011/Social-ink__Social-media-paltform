@@ -1,9 +1,21 @@
 const z = require("zod");
 
 const registerUsersSchema = z.object({
-  name: z.string().trim().min(3, "Full name must be at least 3 characters"),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name cannot exceed 50 characters"),
 
-  userName: z.string().trim().min(3, "Username must be at least 3 characters"),
+  userName: z
+    .string()
+    .trim()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username cannot exceed 30 characters")
+    .regex(
+      /^[a-zA-Z0-9_.]+$/,
+      "Username can only contain letters, numbers, underscore and period, no spaces",
+    ),
 
   email: z.email("Invalid email address"),
 
