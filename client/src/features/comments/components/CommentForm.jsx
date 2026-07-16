@@ -9,9 +9,10 @@ import { useCreateComment } from "../hooks/useCreateComment";
 import Input from "../../../shared/components/Input";
 import Button from "../../../shared/components/Button";
 
-function CommentForm({ postId }) {
+function CommentForm({ postId , querykey }) {
   const queryClient = useQueryClient();
 
+  
   const { mutate, isPending } = useCreateComment();
 
   const {
@@ -38,8 +39,10 @@ function CommentForm({ postId }) {
           });
 
           await queryClient.invalidateQueries({
-            queryKey: ["feed"],
+            queryKey: querykey,
           });
+          
+     
         },
 
         onError: (error) => {
@@ -53,28 +56,28 @@ function CommentForm({ postId }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mt-4 flex gap-2 items-center"
-    >
-      <div className="flex-1">
-        <Input
-          id="content"
-          label=""
-          register={register("content")}
-          error={errors.content}
-          placeholder="Write a comment..."
-        />
-      </div>
+<form
+  onSubmit={handleSubmit(onSubmit)}
+    className="mt-4 flex items-end gap-3"
+>
+  <div className="flex-1">
+    <Input
+      id="content"
+      label=""
+      register={register("content")}
+      error={errors.content}
+      placeholder="Write a comment..."
+    />
+  </div>
 
-      <Button
-        type="submit"
-        disabled={isPending}
-        className="w-auto px-6 h-10 "
-      >
-        Post
-      </Button>
-    </form>
+  <Button
+    type="submit"
+    disabled={isPending}
+    className="rounded-full px-5 py-2"
+  >
+    {isPending ? "Posting..." : "Post"}
+  </Button>
+</form>
   );
 }
 

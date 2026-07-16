@@ -1,17 +1,31 @@
 import Loader from "../../../shared/components/Loader";
 
-import { useFeed } from "../hooks/useFeed";
-
+import { useInfiniteFeed } from "../hooks/useInfiniteFeed";
+import { useEffect, useRef } from "react";
 import PostCard from "./PostCard";
 import EmptyState from "../../../shared/components/EmptyState";
 import PostSkeleton from "./PostLoader";
 import PostLoader from "./PostLoader";
 
-function PostList({page}) {
-  const { data, isLoading } = useFeed(page);
+function PostList() {
+  
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =  useInfiniteFeed();
+  const loadMoreRef = useRef(null);
+  const pages = data?.pages || [];
 
-  const posts = data?.posts || [];
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    });
 
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
   if (isLoading) {
     return (
       <>
@@ -22,7 +36,7 @@ function PostList({page}) {
     );
   }
 
-  if (posts.length === 0) {
+  if (pages.length === 0) {
     return (
       <EmptyState
         title="No posts yet"
@@ -32,11 +46,15 @@ function PostList({page}) {
   }
 
   return (
-    <div>
-      {posts.map((post) => (
-        <PostCard key={post._id} post={post} page={page} />
-      ))}
-    </div>
+    <>
+      <div className="space-y-4">
+        {pages.map((page) =>
+          page.posts.map((post) => <PostCard key={post._id} post={post} />),
+        )}
+      </div>
+      <div ref={loadMoreRef} />
+      {isFetchingNextPage && <Loader />}
+    </>
   );
 }
 

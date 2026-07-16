@@ -7,23 +7,13 @@ import Pagination from "../components/Pagination";
 import { useFeed } from "../hooks/useFeed";
 
 function FeedPage() {
-  const [page, setPage] = useState(1);
-
-  const { data } = useFeed(page);
 
   return (
-    <section className="mx-auto max-w-2xl">
+    <section className="mx-auto flex w-full max-w-3xl flex-col gap-5   lg:px-0">
       <CreatePostForm />
 
-      <PostList page={page} />
+      <PostList />
 
-      {data && (
-        <Pagination
-          currentPage={data.currentPage}
-          totalPages={data.totalPages}
-          onPageChange={setPage}
-        />
-      )}
     </section>
   );
 }

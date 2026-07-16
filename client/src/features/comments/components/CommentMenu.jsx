@@ -8,6 +8,7 @@ function CommentMenu({
   comment,
   postId,
   setIsEditing,
+  querykey
 }) {
   const [open, setOpen] = useState(false);
 
@@ -31,7 +32,7 @@ function CommentMenu({
         });
 
         await queryClient.invalidateQueries({
-          queryKey: ["feed"],
+          queryKey: querykey,
         });
       },
 
@@ -45,7 +46,7 @@ function CommentMenu({
   }
 
   return (
-    <div className="relative">
+    <div className="relative ">
       <button
         onClick={() =>
           setOpen((prev) => !prev)
@@ -56,7 +57,7 @@ function CommentMenu({
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-36 rounded-xl border bg-white shadow-lg">
+        <div className="absolute right-0 w-36 rounded-xl  bg-white shadow-lg ">
           <button
             onClick={() => {
               setIsEditing(true);
@@ -64,14 +65,14 @@ function CommentMenu({
             }}
             className="block w-full px-4 py-2 text-left hover:bg-gray-100"
           >
-            ✏️ Edit
+             Edit
           </button>
 
           <button
             onClick={handleDelete}
             className="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100"
           >
-            🗑 Delete
+             Delete
           </button>
         </div>
       )}

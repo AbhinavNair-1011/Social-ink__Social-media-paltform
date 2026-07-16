@@ -12,6 +12,7 @@ import Button from "../../../shared/components/Button";
 function EditPostForm({
   post,
   setIsEditing,
+  querykey
 }) {
   const queryClient = useQueryClient();
 
@@ -21,6 +22,7 @@ function EditPostForm({
   const {
     register,
     handleSubmit,
+    formState:{errors}
   } = useForm({
     resolver: zodResolver(postSchema),
 
@@ -40,13 +42,14 @@ function EditPostForm({
           toast.success("Post updated.");
 
           await queryClient.invalidateQueries({
-            queryKey: ["feed"],
+            queryKey: querykey,
           });
 
           setIsEditing(false);
         },
 
         onError: (error) => {
+        
           toast.error(
             error.response?.data?.error
               ?.message ||
@@ -58,36 +61,37 @@ function EditPostForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-3"
+ <form
+  onSubmit={handleSubmit(onSubmit)}
+  className="space-y-4"
+>
+  <Textarea
+    id="content"
+    label=""
+    register={register("content")}
+    rows={4}
+    className="rounded-xl border border-slate-200 bg-slate-50 focus:border-indigo-500 focus:bg-white"
+  />
+  {errors && <p className="text-red-600 text-sm"> {errors?.content?.message}</p>}
+
+  <div className="flex items-center justify-end gap-3">
+    <Button
+      type="button"
+      onClick={() => setIsEditing(false)}
+      className="rounded-full border border-slate-300 bg-red-500 px-5 py-2 text-slate-700 shadow-none hover:bg-red-600"
     >
-      <Textarea
-        id="content"
-        label=""
-        register={register("content")}
-      />
+      Cancel
+    </Button>
 
-      <div className="flex gap-2">
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="w-auto"
-        >
-          Save
-        </Button>
-
-        <Button
-          type="button"
-          onClick={() =>
-            setIsEditing(false)
-          }
-          className="w-auto bg-gray-500 hover:bg-gray-600"
-        >
-          Cancel
-        </Button>
-      </div>
-    </form>
+    <Button
+      type="submit"
+      disabled={isPending}
+      className="rounded-full px-6 py-2 "
+    >
+      {isPending ? "Saving..." : "Save"}
+    </Button>
+  </div>
+</form>
   );
 }
 

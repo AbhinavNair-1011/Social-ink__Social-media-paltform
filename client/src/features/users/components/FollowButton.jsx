@@ -14,7 +14,7 @@ function FollowButton({ isFollowing, onFollow, onUnfollow, isPending }) {
   }
 
   return (
-    <Button onClick={onFollow} disabled={isPending} className=" w-24">
+    <Button onClick={onFollow} disabled={isPending} className=" ">
       Follow
     </Button>
   );

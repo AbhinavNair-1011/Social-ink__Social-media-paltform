@@ -1,6 +1,7 @@
 import { Navigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useState, useRef } from "react";
 
 import Loader from "../../../shared/components/Loader";
 import EmptyState from "../../../shared/components/EmptyState";
@@ -12,6 +13,9 @@ import FollowButton from "../components/FollowButton";
 import { useUserProfile } from "../hooks/useUserProfile";
 import { useFollow } from "../hooks/useFollow";
 import { useUnfollow } from "../hooks/useUnfollow";
+import UserPosts from "../components/UserPosts";
+import FollowersList from "../components/FollowersList";
+import FollowingList from "../components/FollowingList";
 
 function UserProfilePage() {
   const { userId } = useParams();
@@ -23,6 +27,7 @@ function UserProfilePage() {
   const { mutate: follow } = useFollow();
 
   const { mutate: unfollow } = useUnfollow();
+  const [activeTab, setActiveTab] = useState("posts");
 
   if (isLoading) {
     return <Loader />;
@@ -78,7 +83,7 @@ function UserProfilePage() {
     return <Navigate to="/profile" replace />;
   }
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="">
       <ProfileHeader user={data.user}>
         <FollowButton
           isFollowing={data.isFollowing}
@@ -92,7 +97,17 @@ function UserProfilePage() {
         posts={data.postsCount}
         followers={data.followersCount}
         following={data.followingCount}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
+
+      <div className="mt-8">
+        {activeTab === "posts" && <UserPosts userId={userId} />}
+
+        {activeTab === "followers" && <FollowersList userId={userId} />}
+
+        {activeTab === "following" && <FollowingList userId={userId} />}
+      </div>
     </div>
   );
 }

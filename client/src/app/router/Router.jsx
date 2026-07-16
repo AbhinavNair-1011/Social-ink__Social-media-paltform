@@ -1,34 +1,68 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
+import PublicRoute from "./PublicRoute"
+import ProtectedRoute from "./ProtectedRoute"
 import AuthLayout from "../layouts/AuthLayout";
 import AppLayout from "../layouts/AppLayout";
+import LazyPage from "../../shared/components/LazyPage";
 
-import LoginPage from "../../features/auth/pages/LoginPage";
-import RegisterPage from "../../features/auth/pages/RegisterPage";
+const LoginPage = lazy(() => import("../../features/auth/pages/LoginPage"));
 
-import FeedPage from "../../features/posts/pages/FeedPage";
-import ProfilePage from "../../features/users/pages/ProfilePage";
+const RegisterPage = lazy(
+  () => import("../../features/auth/pages/RegisterPage"),
+);
 
-import NotFoundPage from "../../pages/NotFountPage";
+const FeedPage = lazy(() => import("../../features/posts/pages/FeedPage"));
 
-import ProtectedRoute from "./ProtectedRoute";
-import PublicRoute from "./PublicRoute";
-import ChangeEmailPage from "../../features/auth/pages/ChangeEmailPage";
-import VerifyEmailPage from "../../features/auth/pages/VerifyEmailPage";
-import ForgotPasswordPage from "../../features/auth/pages/ForgotPasswordPage";
-import ResetPasswordPage from "../../features/auth/pages/ResetPasswordPage";
-import VerifyTwoFactorPage from "../../features/auth/pages/VerifyTwoFactorPage";
-import UserProfilePage from "../../features/users/pages/UserProfilePage";
-import SearchUsersPage from "../../features/users/pages/SearchUsersPage";
-import FollowingPage from "../../features/users/pages/FollowingPage";
-import FollowersPage from "../../features/users/pages/FollowersPage";
+const ProfilePage = lazy(
+  () => import("../../features/users/pages/ProfilePage"),
+);
+
+const SearchUsersPage = lazy(
+  () => import("../../features/users/pages/SearchUsersPage"),
+);
+
+const UserProfilePage = lazy(
+  () => import("../../features/users/pages/UserProfilePage"),
+);
+
+const VerifyEmailPage = lazy(
+  () => import("../../features/auth/pages/VerifyEmailPage"),
+);
+
+const ForgotPasswordPage = lazy(
+  () => import("../../features/auth/pages/ForgotPasswordPage"),
+);
+
+const ResetPasswordPage = lazy(
+  () => import("../../features/auth/pages/ResetPasswordPage"),
+);
+
+const ChangeEmailPage = lazy(
+  () => import("../../features/auth/pages/ChangeEmailPage"),
+);
+
+const VerifyTwoFactorPage = lazy(
+  () => import("../../features/auth/pages/VerifyTwoFactorPage"),
+);
+
+const NotFoundPage = lazy(() => import("../../pages/NotFountPage"));
 
 const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Navigate to="/login" replace />,
+  },
   {
     element: <PublicRoute />,
     children: [
       {
-        element: <AuthLayout />,
+        element: (
+          <LazyPage>
+            <AuthLayout />
+          </LazyPage>
+        ),
         children: [
           {
             path: "/login",
@@ -67,7 +101,11 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
-        element: <AppLayout />,
+        element: (
+          <LazyPage>
+            <AppLayout />
+          </LazyPage>
+        ),
         children: [
           {
             path: "/feed",
@@ -80,14 +118,6 @@ const router = createBrowserRouter([
           {
             path: "/users",
             element: <SearchUsersPage />,
-          },
-          {
-            path: "/users/:userId/followers",
-            element: <FollowersPage />,
-          },
-          {
-            path: "/users/:userId/following",
-            element: <FollowingPage />,
           },
           {
             path: "/users/:userId",

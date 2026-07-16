@@ -5,24 +5,20 @@ export async function getFeed(page) {
     params: {
       page,
       limit: 10,
-      
     },
   });
 
   return response.data.data;
 }
 
-export async function createPost(postData) {
-  const response = await api.post("/posts", postData);
+export async function createPost(formData) {
+  const response = await api.post("/posts", formData);
 
   return response.data.data.post;
 }
 
 export async function updatePost(postId, postData) {
-  const response = await api.patch(
-    `/posts/${postId}`,
-    postData
-  );
+  const response = await api.patch(`/posts/${postId}`, postData);
 
   return response.data.data.post;
 }
@@ -37,4 +33,26 @@ export async function likePost(postId) {
 
 export async function unlikePost(postId) {
   await api.delete(`/posts/${postId}/like`);
+}
+export async function getMyPosts(page, type) {
+  const response = await api.get("/posts/me/posts", {
+    params: {
+      page,
+      limit: 12,
+      type,
+    },
+  });
+
+  return response.data.data;
+}
+export async function getUserPosts(page,userId,type) {
+  const response = await api.get(`/posts/${userId}/posts`, {
+    params: {
+      page,
+      limit: 12,
+      type,
+    },
+  });
+
+  return response.data.data;
 }

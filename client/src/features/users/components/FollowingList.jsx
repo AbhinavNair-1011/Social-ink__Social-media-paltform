@@ -3,18 +3,12 @@ import { useParams } from "react-router-dom";
 import Loader from "../../../shared/components/Loader";
 import EmptyState from "../../../shared/components/EmptyState";
 
-import UserList from "../components/UserList";
+import UserList from "./UserList";
 
 import { useFollowing } from "../hooks/useFollowing";
 
-function FollowingPage() {
-  const { userId } = useParams();
-
-  const {
-    data = [],
-    isLoading,
-    isError,
-  } = useFollowing(userId);
+function FollowingPage({ userId }) {
+  const { data = [], isLoading, isError } = useFollowing(userId);
 
   if (isLoading) return <Loader />;
 
@@ -29,11 +23,9 @@ function FollowingPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-3xl font-bold">
-        Following
-      </h1>
+      <h1 className="text-3xl font-bold">Following</h1>
 
-      <UserList users={data} />
+      <UserList users={data} alternate={"Not Following Anyone "} />
     </div>
   );
 }

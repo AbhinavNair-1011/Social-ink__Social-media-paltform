@@ -9,50 +9,61 @@ import Avatar from "../../../shared/components/Avatar";
 function CommentItem({ comment , postId}) {
   const [isEditing, setIsEditing] = useState(false);
   return (
-    <div className="flex gap-3 rounded-xl  border-b  border-gray-300 p-3">
-      <Avatar image={comment.userId.profileImage} />
+  <div className="flex gap-3 ">
+  <Avatar
+    image={comment.userId.profileImage}
+    className="h-10 w-10"
+  />
 
-      <div className="flex-1">
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="font-medium">{comment.userId.name}</h3>
+  <div className="min-w-0 flex-1">
+    <div className="rounded-2xl bg-slate-50 px-4 py-3">
+      <div className="flex items-start justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="truncate text-sm font-semibold text-slate-900">
+              {comment.userId.name}
+            </h3>
 
-              <p className="text-sm text-gray-500">
-                @{comment.userId.userName}
-              </p>
-            </div>
+            <span className="text-xs text-slate-400">•</span>
 
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400">
-                {formatDistanceToNow(new Date(comment.createdAt), {
-                  addSuffix: true,
-                })}
-              </span>
-
-              {comment.isOwner && (
-                <CommentMenu
-                  comment={comment}
-                  postId={postId}
-                  setIsEditing={setIsEditing}
-                />
-              )}
-            </div>
+            <span className="truncate text-xs text-slate-500">
+              @{comment.userId.userName}
+            </span>
           </div>
 
-          {isEditing ? (
-            <EditCommentForm
-              comment={comment}
-              postId={postId}
-              setIsEditing={setIsEditing}
-            />
-          ) : (
-            <p className="mt-2 whitespace-pre-wrap">{comment.content}</p>
-          )}
+          <p className="mt-1 text-xs text-slate-400">
+            {formatDistanceToNow(new Date(comment.createdAt), {
+              addSuffix: true,
+            })}
+          </p>
         </div>
+
+        {comment.isOwner && (
+          <CommentMenu
+            comment={comment}
+            postId={postId}
+            setIsEditing={setIsEditing}
+          />
+        )}
       </div>
+
+      {isEditing ? (
+        <div className="mt-3">
+          <EditCommentForm
+            comment={comment}
+            postId={postId}
+            setIsEditing={setIsEditing}
+          />
+        </div>
+      ) : (
+        <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-slate-800">
+          {comment.content}
+        </p>
+      )}
     </div>
-  );
+  </div>
+</div>
+  )
 }
 
 export default CommentItem;

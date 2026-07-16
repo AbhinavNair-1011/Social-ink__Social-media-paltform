@@ -1,10 +1,10 @@
 import UserCard from "./UserCard";
 
-function UserList({ users }) {
+function UserList({ users , alternate}) {
   if (users.length === 0) {
     return (
       <p className="py-10 text-center text-slate-500">
-        Nothing to show.
+        {alternate}
       </p>
     );
   }

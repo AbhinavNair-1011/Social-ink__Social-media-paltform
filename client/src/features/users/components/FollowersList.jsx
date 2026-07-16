@@ -3,12 +3,12 @@ import { useParams } from "react-router-dom";
 import Loader from "../../../shared/components/Loader";
 import EmptyState from "../../../shared/components/EmptyState";
 
-import UserList from "../components/UserList";
+import UserList from "./UserList";
 
 import { useFollowers } from "../hooks/useFollowers";
 
-function FollowersPage() {
-  const { userId } = useParams();
+function FollowersPage({userId}) {
+  
 
   const { data = [], isLoading, isError } = useFollowers(userId);
 
@@ -27,7 +27,7 @@ function FollowersPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-3xl font-bold">Followers</h1>
 
-      <UserList users={data} />
+      <UserList users={data} alternate={"No Followers"} />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { useComments } from "../hooks/useComments";
 import CommentItem from "./CommentItem";
 import CommentForm from "./CommentForm";
 
-function CommentList({ postId }) {
+function CommentList({ postId, querykey }) {
   const { data: comments, isLoading } = useComments(postId);
 
   if (isLoading) {
@@ -13,12 +13,15 @@ function CommentList({ postId }) {
   }
 
   return (
-    <div className="mt-5 space-y-3">
-      <CommentForm postId={postId} />
+    <div className="mt-5 space-y-3 ">
+   
+      <CommentForm postId={postId}  querykey={querykey}/>
 
-      {comments.map((comment) => (
-        <CommentItem key={comment._id} comment={comment} postId={postId} />
-      ))}
+      <div className="space-y-3 max-h-[450px]  overflow-x-scroll">
+        {comments.map((comment) => (
+          <CommentItem key={comment._id} comment={comment} postId={postId} />
+        ))}
+      </div>
     </div>
   );
 }

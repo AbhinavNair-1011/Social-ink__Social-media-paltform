@@ -12,9 +12,13 @@ import { useProfile } from "../hooks/useProfile";
 import { useUpdateProfile } from "../hooks/useUpdateProfile";
 import { useState, useRef } from "react";
 import { useUploadProfileImage } from "../hooks/useUploadProfileImage";
+import MyPosts from "../components/MyPosts";
+import FollowersList from "../components/FollowersList"
+import FollowingList from "../components/FollowingList"
+
 function ProfilePage() {
   const queryClient = useQueryClient();
-
+  const [activeTab, setActiveTab] = useState("posts");
   const { data, isLoading, isError } = useProfile();
   const { mutate: updateProfile } = useUpdateProfile();
   const { mutate: uploadImage } = useUploadProfileImage();
@@ -54,7 +58,7 @@ function ProfilePage() {
     updateProfile(data, {
       onSuccess: (updatedUser) => {
         queryClient.setQueryData(["profile"], updatedUser);
-        
+
         queryClient.setQueryData(["me"], updatedUser);
         setIsEditing(false);
         toast.success("Profile updated successfully.");
@@ -79,8 +83,17 @@ function ProfilePage() {
         posts={data.postsCount}
         followers={data.followersCount}
         following={data.followingCount}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
 
+      <div className="mt-8">
+        {activeTab === "posts" && <MyPosts />}
+
+        {activeTab === "followers" && <FollowersList userId={data.user._id} />}
+
+        {activeTab === "following" && <FollowingList userId={data.user._id} />}
+      </div>
       {isEditing && (
         <EditProfileModal
           user={data.user}

@@ -1,49 +1,52 @@
 import { Link } from "react-router-dom";
-
 function ProfileStats({
-  userId,
-  posts = 0,
-  followers = 0,
-  following = 0,
+  posts,
+  followers,
+  following,
+  activeTab,
+  setActiveTab,
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex  gap-3">
-        <div className="flex-1  bg-slate-100  py-3 text-center">
-          <p className="text-xl font-bold text-slate-900">
-            {posts}
-          </p>
+      <div className="flex">
+        <button
+          onClick={() => setActiveTab("posts")}
+          className={`flex-1 py-3 text-center transition ${
+            activeTab === "posts" ? "bg-slate-100" : "hover:bg-slate-50"
+          }`}
+        >
+          <p className="text-xl font-bold">{posts}</p>
 
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Posts
           </p>
-        </div>
+        </button>
 
-        <Link
-          to={`/users/${userId}/followers`}
-          className="flex-1 border-r border-slate-200 py-3 text-center transition bg-slate-100 hover:bg-slate-200"
+        <button
+          onClick={() => setActiveTab("followers")}
+          className={`flex-1 border-x border-slate-200 py-3 text-center transition ${
+            activeTab === "followers" ? "bg-slate-100" : "hover:bg-slate-50"
+          }`}
         >
-          <p className="text-xl font-bold text-slate-900">
-            {followers}
-          </p>
+          <p className="text-xl font-bold">{followers}</p>
 
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Followers
           </p>
-        </Link>
+        </button>
 
-        <Link
-          to={`/users/${userId}/following`}
-          className="flex-1 py-3 text-center transition bg-slate-100 hover:bg-slate-200"
+        <button
+          onClick={() => setActiveTab("following")}
+          className={`flex-1 py-3 text-center transition ${
+            activeTab === "following" ? "bg-slate-100" : "hover:bg-slate-50"
+          }`}
         >
-          <p className="text-xl font-bold text-slate-900">
-            {following}
-          </p>
+          <p className="text-xl font-bold">{following}</p>
 
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Following
           </p>
-        </Link>
+        </button>
       </div>
     </div>
   );
