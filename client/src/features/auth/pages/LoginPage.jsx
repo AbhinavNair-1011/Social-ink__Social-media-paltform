@@ -12,6 +12,8 @@ import { useLogin } from "../hooks/useLogin";
 import toast from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useResendVerification } from "../hooks/useResendVerification";
+import socket from "../../../app/socket";
+
 
 function LoginPage() {
   const { mutate, isPending } = useLogin();
@@ -40,7 +42,7 @@ function LoginPage() {
           queryClient.setQueryData(["me"], data.user);
 
           toast.success("Logged in successfully.");
-
+     
           navigate("/feed");
         }
       },

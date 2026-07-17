@@ -1,8 +1,11 @@
 const Like = require("../models/like.model");
 const Post = require("../models/post.model");
+const { createNotification } = require("../services/notification.service");
 const AppError = require("../utils/appError");
 const uploadToS3 = require("../utils/uploadToS3");
-
+const { deleteNotification } = require("../services/notification.service");
+const { getIO } = require("../socket");
+const getPostRealtimeData = require("../services/post.service");
 async function createPost(req, res) {
   let image = "";
 
@@ -157,7 +160,7 @@ async function deletePost(req, res) {
   }
 
   await post.deleteOne();
-
+  getIO().emit("post:deleted", postId);
   return res.status(200).json({
     success: true,
     data: null,
@@ -192,6 +195,17 @@ async function likePost(req, res) {
 
   await post.save();
 
+  await createNotification({
+    receiver: post.author,
+    sender: req.user.userId,
+    type: "like",
+    post: post._id,
+  });
+
+  const updatedPost = await getPostRealtimeData(post._id, req.user.userId);
+
+  getIO().emit("post:updated", updatedPost);
+
   return res.status(201).json({
     success: true,
     data: null,
@@ -213,12 +227,21 @@ async function unlikePost(req, res) {
 
   await like.deleteOne();
 
-  await Post.findByIdAndUpdate(postId, {
+  const post = await Post.findByIdAndUpdate(postId, {
     $inc: {
       likesCount: -1,
     },
   });
 
+  await deleteNotification({
+    receiver: post.author,
+    sender: req.user.userId,
+    type: "like",
+    post: post._id,
+  });
+
+  const updatedPost = await getPostRealtimeData(post._id, req.user.userId);
+  getIO().emit("post:updated", updatedPost);
   return res.status(200).json({
     success: true,
     data: null,
@@ -289,9 +312,9 @@ async function getUserPosts(req, res) {
 
   const skip = (page - 1) * limit;
 
-const filter = {
-  author: req.params.userId,
-};
+  const filter = {
+    author: req.params.userId,
+  };
   if (type === "images") {
     filter.imageUrl = {
       $exists: true,

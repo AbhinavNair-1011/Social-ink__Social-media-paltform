@@ -1,6 +1,9 @@
 const Comment = require("../models/comment.model");
 const Post = require("../models/post.model");
-
+const { createNotification } = require("../services/notification.service");
+const { deleteNotification } = require("../services/notification.service");
+const getPostRealtimeData = require("../services/post.service");
+const { getIO } = require("../socket");
 const AppError = require("../utils/appError");
 
 async function createComment(req, res) {
@@ -9,11 +12,7 @@ async function createComment(req, res) {
   const post = await Post.findById(postId);
 
   if (!post) {
-    throw new AppError(
-      "Post not found",
-      404,
-      "NotFoundError"
-    );
+    throw new AppError("Post not found", 404, "NotFoundError");
   }
 
   const comment = await Comment.create({
@@ -25,6 +24,29 @@ async function createComment(req, res) {
   post.commentsCount += 1;
 
   await post.save();
+
+  await createNotification({
+    receiver: post.author,
+    sender: req.user.userId,
+    type: "comment",
+    post: post._id,
+    comment: comment._id,
+  });
+
+  const updatedPost = await getPostRealtimeData(post._id, req.user.userId);
+  const populatedComment = await Comment.findById(comment._id)
+    .populate("userId", "name username profileImage")
+    .lean();
+
+  let formattedComment = {
+    ...populatedComment,
+
+    isOwner: populatedComment.userId._id.toString() === req.user.userId,
+  };
+
+  getIO().emit("comment:created", formattedComment);
+
+  getIO().emit("post:updated", updatedPost);
 
   return res.status(201).json({
     success: true,
@@ -41,37 +63,26 @@ async function getComments(req, res) {
   const post = await Post.findById(postId);
 
   if (!post) {
-    throw new AppError(
-      "Post not found",
-      404,
-      "NotFoundError"
-    );
+    throw new AppError("Post not found", 404, "NotFoundError");
   }
 
   const comments = await Comment.find({
     postId,
   })
-    .populate(
-      "userId",
-      "name userName profileImage"
-    )
+    .populate("userId", "name userName profileImage")
     .sort({
       createdAt: -1,
     });
-      const formattedComments = comments.map(
-    (comment) => ({
-      ...comment.toObject(),
+  const formattedComments = comments.map((comment) => ({
+    ...comment.toObject(),
 
-      isOwner:
-        comment.userId._id.toString() ===
-        req.user.userId,
-    })
-  );
+    isOwner: comment.userId._id.toString() === req.user.userId,
+  }));
   return res.status(200).json({
     success: true,
 
     data: {
-      comments:formattedComments,
+      comments: formattedComments,
     },
 
     error: null,
@@ -81,25 +92,17 @@ async function getComments(req, res) {
 async function updateComment(req, res) {
   const { commentId } = req.params;
 
-  const comment =
-    await Comment.findById(commentId);
+  const comment = await Comment.findById(commentId);
 
   if (!comment) {
-    throw new AppError(
-      "Comment not found",
-      404,
-      "NotFoundError"
-    );
+    throw new AppError("Comment not found", 404, "NotFoundError");
   }
 
-  if (
-    comment.userId.toString() !==
-    req.user.userId
-  ) {
+  if (comment.userId.toString() !== req.user.userId) {
     throw new AppError(
       "You are not authorized to update this comment",
       403,
-      "AuthorizationError"
+      "AuthorizationError",
     );
   }
 
@@ -121,31 +124,21 @@ async function updateComment(req, res) {
 async function deleteComment(req, res) {
   const { commentId } = req.params;
 
-  const comment =
-    await Comment.findById(commentId);
+  const comment = await Comment.findById(commentId);
 
   if (!comment) {
-    throw new AppError(
-      "Comment not found",
-      404,
-      "NotFoundError"
-    );
+    throw new AppError("Comment not found", 404, "NotFoundError");
   }
 
-  if (
-    comment.userId.toString() !==
-    req.user.userId
-  ) {
+  if (comment.userId.toString() !== req.user.userId) {
     throw new AppError(
       "You are not authorized to delete this comment",
       403,
-      "AuthorizationError"
+      "AuthorizationError",
     );
   }
 
-  const post = await Post.findById(
-    comment.postId
-  );
+  const post = await Post.findById(comment.postId);
 
   if (post) {
     post.commentsCount -= 1;
@@ -154,6 +147,16 @@ async function deleteComment(req, res) {
   }
 
   await comment.deleteOne();
+  await deleteNotification({
+    receiver: post.author,
+    sender: req.user.userId,
+    type: "comment",
+    post: post._id,
+    comment: comment._id,
+  });
+  const updatedPost = await getPostRealtimeData(post._id, req.user.userId);
+
+  getIO().emit("post:updated", updatedPost);
 
   return res.status(200).json({
     success: true,
@@ -161,9 +164,9 @@ async function deleteComment(req, res) {
     error: null,
   });
 }
-module.exports={
-    createComment,
-    getComments,
-    updateComment,
-    deleteComment
-}
+module.exports = {
+  createComment,
+  getComments,
+  updateComment,
+  deleteComment,
+};

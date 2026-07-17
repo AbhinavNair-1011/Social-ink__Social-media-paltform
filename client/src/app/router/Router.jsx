@@ -1,11 +1,12 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 
-import PublicRoute from "./PublicRoute"
-import ProtectedRoute from "./ProtectedRoute"
+import PublicRoute from "./PublicRoute";
+import ProtectedRoute from "./ProtectedRoute";
 import AuthLayout from "../layouts/AuthLayout";
 import AppLayout from "../layouts/AppLayout";
 import LazyPage from "../../shared/components/LazyPage";
+
 
 const LoginPage = lazy(() => import("../../features/auth/pages/LoginPage"));
 
@@ -47,6 +48,10 @@ const VerifyTwoFactorPage = lazy(
   () => import("../../features/auth/pages/VerifyTwoFactorPage"),
 );
 
+const NotificationPage = lazy(
+  () => import("../../features/notification/pages/NotificationPage"),
+);
+const PostPage = lazy( ()=> import("../../features/posts/pages/PostPage"))
 const NotFoundPage = lazy(() => import("../../pages/NotFountPage"));
 
 const router = createBrowserRouter([
@@ -122,6 +127,14 @@ const router = createBrowserRouter([
           {
             path: "/users/:userId",
             element: <UserProfilePage />,
+          },
+          {
+            path: "/notifications",
+            element: <NotificationPage />,
+          },
+          {
+            path: "/posts/:postId",
+            element: <PostPage />,
           },
         ],
       },

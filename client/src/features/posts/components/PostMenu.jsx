@@ -25,6 +25,9 @@ function PostMenu({ post, setIsEditing , querykey }) {
         await queryClient.invalidateQueries({
           queryKey:querykey,
         });
+         await queryClient.invalidateQueries({
+          queryKey:["profile"],
+        });
       },
 
       onError: (error) => {

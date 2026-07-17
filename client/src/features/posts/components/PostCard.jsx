@@ -50,12 +50,12 @@ function PostCard({ post, page, querykey }) {
         setIsEditing={setIsEditing}
         onLikeSuccess={() =>
           queryClient.invalidateQueries({
-            queryKey: ["feed"],
+            queryKey: querykey,
           })
         }
         onDeleteSuccess={() =>
           queryClient.invalidateQueries({
-            queryKey: ["feed"],
+            queryKey: querykey,
           })
         }
       />

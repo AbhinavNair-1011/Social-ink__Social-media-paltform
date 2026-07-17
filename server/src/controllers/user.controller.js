@@ -3,6 +3,7 @@ const AppError = require("../utils/appError");
 const Follow = require("../models/follow.model");
 const Post = require("../models/post.model");
 const uploadToS3 = require("../utils/uploadToS3");
+const { createNotification, deleteNotification } = require("../services/notification.service");
 async function getMyProfile(req, res) {
   const user = await User.findById(req.user.userId).select(
     "name email userName dob bio profileImage createdAt",
@@ -109,7 +110,7 @@ async function getUserProfile(req, res) {
       followersCount,
       followingCount,
       isFollowing,
-      isMe
+      isMe,
     },
 
     error: null,
@@ -133,6 +134,11 @@ async function followUser(req, res) {
     follower: req.user.userId,
     following: userId,
   });
+  await createNotification({
+    receiver: followingUserId,
+    sender: req.user.userId,
+    type: "follow",
+  });
 
   return res.status(201).json({
     success: true,
@@ -147,6 +153,11 @@ async function unfollowUser(req, res) {
     follower: req.user.userId,
     following: userId,
   });
+  await deleteNotification({
+    receiver: followedUser._id,
+    sender: req.user.userId,
+    type: "follow",
+  });
 
   return res.status(200).json({
     success: true,
@@ -154,6 +165,7 @@ async function unfollowUser(req, res) {
     error: null,
   });
 }
+
 async function searchUsers(req, res) {
   const { search } = req.query;
 
@@ -202,17 +214,12 @@ async function getFollowers(req, res) {
 async function getFollowing(req, res) {
   const following = await Follow.find({
     follower: req.params.userId,
-  }).populate(
-    "following",
-    "name userName profileImage bio",
-  );
+  }).populate("following", "name userName profileImage bio");
 
   return res.status(200).json({
     success: true,
     data: {
-      following: following.map(
-        (item) => item.following,
-      ),
+      following: following.map((item) => item.following),
     },
     error: null,
   });

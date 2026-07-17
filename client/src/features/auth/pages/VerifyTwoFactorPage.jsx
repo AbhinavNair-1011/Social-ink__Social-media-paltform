@@ -11,6 +11,7 @@ import Button from "../../../shared/components/Button";
 import { verifyEmailSchema, verifyTwoFactorSchema } from "../schemas/authSchemas";
 
 import { useVerifyTwoFactor } from "../hooks/useVerifyTwoFactor";
+import socket from "../../../app/socket";
 
 function VerifyTwoFactorPage() {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ function VerifyTwoFactorPage() {
   function onSubmit(data) {
     mutate(data, {
       onSuccess: () => {
+ 
         navigate("/feed", {
           replace: true,
         });

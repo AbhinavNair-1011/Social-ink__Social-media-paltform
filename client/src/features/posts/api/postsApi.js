@@ -45,7 +45,7 @@ export async function getMyPosts(page, type) {
 
   return response.data.data;
 }
-export async function getUserPosts(page,userId,type) {
+export async function getUserPosts(page, userId, type) {
   const response = await api.get(`/posts/${userId}/posts`, {
     params: {
       page,
@@ -55,4 +55,11 @@ export async function getUserPosts(page,userId,type) {
   });
 
   return response.data.data;
+}
+
+export async function getPost(postId) {
+  
+  const response = await api.get(`/posts/${postId}`);
+
+  return response.data.data.post;
 }

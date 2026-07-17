@@ -8,7 +8,9 @@ const authRoutes = require("./routes/auth.route");
 const userRoutes = require("./routes/user.route");
 const postRoutes = require("./routes/post.route");
 const commentRoutes = require("./routes/comment.route");
-
+const notificationRoutes = require("./routes/notification.route")
+const conversationRoutes = require("./routes/conversation.route")
+const messageRoutes= require("./routes/message.route")
 const globalErrorHandler = require("./middlewares/globalErrorHandler");
 const notFoundHandler = require("./middlewares/notFoundHandler");
 
@@ -22,7 +24,7 @@ app.use(
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   })
 );
@@ -44,8 +46,10 @@ app.use("/users", userRoutes);
 
 app.use("/posts", postRoutes);
 app.use("/posts", commentRoutes)
-
 app.use(commentRoutes);
+app.use("/notifications", notificationRoutes)
+app.use('conversations', conversationRoutes)
+app.use("/messages", messageRoutes)
 app.use(notFoundHandler);
 
 app.use(globalErrorHandler);

@@ -1,6 +1,7 @@
 import Logo from "./Logo";
 
 import { useLogout } from "../../features/auth/hooks/useLogout";
+import NotificationBell from "../../features/notification/components/NotificationBell";
 
 function Navbar({ onOpenSidebar }) {
   const { mutate: logout, isPending } = useLogout();
@@ -31,7 +32,9 @@ function Navbar({ onOpenSidebar }) {
         <Logo />
       </div>
 
-      <button
+<div className="flex">
+  <NotificationBell />
+   <button
         onClick={() => logout()}
         disabled={isPending}
         className="flex items-center gap-2 rounded-lg bg-red-500 px-2 py-2 text-sm font-medium text-white transition hover:bg-red-600"
@@ -65,6 +68,8 @@ function Navbar({ onOpenSidebar }) {
           {isPending ? "Logging out..." : "Logout"}
         </span>
       </button>
+</div>
+   
     </header>
   );
 }

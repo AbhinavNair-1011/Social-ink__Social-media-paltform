@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import { logoutUser } from "../api/authApi";
+import socket from "../../../app/socket";
 
 function useLogout() {
   const queryClient = useQueryClient();
@@ -13,6 +14,7 @@ function useLogout() {
 
     onSuccess: () => {
       queryClient.clear();
+      socket.disconnect();
 
       toast.success("Logged out successfully.");
 

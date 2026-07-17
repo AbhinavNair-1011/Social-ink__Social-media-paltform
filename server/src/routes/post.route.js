@@ -24,6 +24,7 @@ const {
   getMyPosts,
   getUserPosts,
 } = require("../controllers/post.controller");
+const objectIdSchema = require("../validators/objectIdSchema");
 
 router.get("/", authMiddleware, validate(getPostsSchema, "query"), getPosts);
 
@@ -39,7 +40,6 @@ router.get("/me/posts", authMiddleware, getMyPosts);
 router.get(
   "/:postId",
   authMiddleware,
-  validate(postIdSchema, "params"),
   getPostById,
 );
 
