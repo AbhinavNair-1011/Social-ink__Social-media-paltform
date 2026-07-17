@@ -180,19 +180,70 @@ function AppLayout() {
       });
     }
 
-    socket.on("notification:new", handleNotification);
+    function handleNewMessage(message) {
+      queryClient.setQueryData(
+        ["messages", message.conversation],
+        (oldMessages = []) => {
+          const alreadyExists = oldMessages.some(
+            (oldMessage) => oldMessage._id === message._id,
+          );
 
+          if (alreadyExists) {
+            return oldMessages;
+          }
+
+          return [...oldMessages, message];
+        },
+      );
+
+      queryClient.setQueryData(["conversations"], (oldConversations) => {
+        if (!oldConversations) {
+          return oldConversations;
+        }
+
+        return oldConversations.map((conversation) => {
+          if (conversation._id !== message.conversation) {
+            return conversation;
+          }
+
+          return {
+            ...conversation,
+            lastMessage: message,
+            lastMessageAt: message.createdAt,
+          };
+        });
+      });
+    }
+
+    function handleUnreadCountUpdated() {
+      queryClient.invalidateQueries({
+        queryKey: ["unread-conversation-count"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["conversations"],
+      });
+    }
+
+    socket.on("notification:new", handleNotification);
     socket.on("notification:delete", handleNotificationDelete);
     socket.on("post:updated", handlePostUpdated);
     socket.on("comment:created", handleCommentCreation);
     socket.on("post:deleted", handlePostDeleted);
+
+    socket.on("new-message", handleNewMessage);
+    socket.on("unread-count-updated", handleUnreadCountUpdated);
     return () => {
       socket.off("notification:delete", handleNotificationDelete);
       socket.off("notification:new", handleNotification);
       socket.off("post:updated", handlePostUpdated);
       socket.off("comment:created", handleCommentCreation);
-          socket.on("post:deleted", handlePostDeleted);
-
+      socket.off("post:deleted", handlePostDeleted);
+      socket.off("new-message", handleNewMessage);
+      socket.off(
+  "unread-count-updated",
+  handleUnreadCountUpdated,
+);
     };
   }, [queryClient]);
 

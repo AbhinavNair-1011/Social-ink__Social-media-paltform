@@ -48,7 +48,7 @@ app.use("/posts", postRoutes);
 app.use("/posts", commentRoutes)
 app.use(commentRoutes);
 app.use("/notifications", notificationRoutes)
-app.use('conversations', conversationRoutes)
+app.use('/conversations', conversationRoutes)
 app.use("/messages", messageRoutes)
 app.use(notFoundHandler);
 

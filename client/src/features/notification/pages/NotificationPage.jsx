@@ -13,6 +13,7 @@ function NotificationsPage() {
   const notifications = data?.pages.flatMap((page) => page.notifications) || [];
 
   const loadMoreRef = useRef(null);
+  
 
   useEffect(() => {
     if (!loadMoreRef.current || !hasNextPage) return;

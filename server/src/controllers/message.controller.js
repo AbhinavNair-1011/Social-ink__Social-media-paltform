@@ -3,14 +3,13 @@ const {
   getMessagesService,
 } = require("../services/message.service");
 
-const { getIO } = require("../socket/index");
+const { emitNewMessage } = require("../socket/index");
 
 async function getMessages(req, res) {
-  const messages =
-    await getMessagesService(
-      req.params.conversationId,
-      req.user.userId,
-    );
+  const messages = await getMessagesService(
+    req.params.conversationId,
+    req.user.userId,
+  );
 
   return res.status(200).json({
     status: "success",
@@ -21,24 +20,16 @@ async function getMessages(req, res) {
 }
 
 async function createMessage(req, res) {
-  const {
+  const { conversationId, text, imageUrl } = req.body;
+
+  const message = await createMessageService(
     conversationId,
+    req.user.userId,
     text,
     imageUrl,
-  } = req.body;
+  );
 
-  const message =
-    await createMessageService(
-      conversationId,
-      req.user.userId,
-      text,
-      imageUrl,
-    );
-
-  getIO()
-    .to(conversationId)
-    .emit("new-message", message);
-
+  emitNewMessage(conversationId, message);
   return res.status(201).json({
     status: "success",
     data: {

@@ -12,11 +12,8 @@ function initSocket(server) {
   });
 
   io.use((socket, next) => {
-
-      
     try {
       const cookies = cookie.parseCookie(socket.handshake.headers.cookie || "");
-
 
       const accessToken = cookies.accessToken;
 
@@ -30,7 +27,7 @@ function initSocket(server) {
 
       next();
     } catch (error) {
-        console.log(error)
+      console.log(error);
       next(new Error("Unauthorized"));
     }
   });
@@ -40,11 +37,34 @@ function initSocket(server) {
 
     console.log(`${socket.userId} joined room ${socket.userId}`);
 
+    socket.on("join-conversation", (conversationId) => {
+      socket.join(conversationId);
+    });
+
+    socket.on("leave-conversation", (conversationId) => {
+      socket.leave(conversationId);
+    });
     socket.on("disconnect", () => {
       console.log(`${socket.userId} disconnected`);
     });
   });
 }
+function emitNewMessage(
+  conversationId,
+  message,
+) {
+  io.to(conversationId).emit(
+    "new-message",
+    message,
+  );
+}
+
+function emitUnreadCountUpdated(userId) {
+  io.to(userId.toString()).emit(
+    "unread-count-updated",
+  );
+}
+
 
 function getIO() {
   return io;
@@ -53,4 +73,6 @@ function getIO() {
 module.exports = {
   initSocket,
   getIO,
+  emitNewMessage,
+  emitUnreadCountUpdated
 };

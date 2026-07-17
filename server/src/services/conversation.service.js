@@ -1,5 +1,5 @@
 const Conversation = require("../models/converstation.model");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 
 async function createConversationService(myId, otherUserId) {
   if (myId === otherUserId) {
@@ -25,19 +25,20 @@ async function createConversationService(myId, otherUserId) {
 
   conversation = await Conversation.create({
     participants: [myId, otherUserId],
+    unreadCounts: {
+      [myId]: 0,
+      [otherUserId]: 0,
+    },
   });
 
   return conversation;
 }
 
 async function getMyConversationsService(userId) {
-  return Conversation.find({
+  const conversations = await Conversation.find({
     participants: userId,
   })
-    .populate(
-      "participants",
-      "name username profileImage",
-    )
+    .populate("participants", "name username profileImage")
     .populate({
       path: "lastMessage",
       populate: {
@@ -48,11 +49,17 @@ async function getMyConversationsService(userId) {
     .sort({
       lastMessageAt: -1,
     });
+
+  return conversations.map((conversation) => ({
+    ...conversation.toObject(),
+    unreadCount: conversation.unreadCounts?.get(userId.toString()) || 0,
+  }));
 }
 
 async function verifyConversationParticipant(
   conversationId,
   userId,
+  markAsRead = false,
 ) {
   const conversation = await Conversation.findOne({
     _id: conversationId,
@@ -60,10 +67,20 @@ async function verifyConversationParticipant(
   });
 
   if (!conversation) {
-    throw new AppError(
-      "Conversation not found.",
-      404,
-      "NotFoundError",
+    throw new AppError("Conversation not found.", 404, "NotFoundError");
+  }
+
+  if (markAsRead) {
+    await Conversation.updateOne(
+      {
+        _id: conversationId,
+        participants: userId,
+      },
+      {
+        $set: {
+          [`unreadCounts.${userId}`]: 0,
+        },
+      },
     );
   }
 

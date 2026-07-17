@@ -18,9 +18,12 @@ export async function getUnreadCount() {
 }
 
 export async function markAsRead(id) {
-  await api.patch(`/notifications/${id}/read`);
+   const response =  await api.patch(`/notifications/${id}/read`);
+  return response.data.data
 }
 
 export async function markAllAsRead() {
-  await api.patch("/notifications/read-all");
+   const response =await api.patch("/notifications/read-all");
+    return response.data.data
+
 }

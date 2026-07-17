@@ -135,7 +135,7 @@ async function followUser(req, res) {
     following: userId,
   });
   await createNotification({
-    receiver: followingUserId,
+    receiver: userId,
     sender: req.user.userId,
     type: "follow",
   });
@@ -154,7 +154,7 @@ async function unfollowUser(req, res) {
     following: userId,
   });
   await deleteNotification({
-    receiver: followedUser._id,
+    receiver: userId,
     sender: req.user.userId,
     type: "follow",
   });

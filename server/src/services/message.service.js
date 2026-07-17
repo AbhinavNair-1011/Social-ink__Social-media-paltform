@@ -1,38 +1,24 @@
 const Conversation = require("../models/converstation.model");
 const Message = require("../models/message.model");
 
-const {
-  verifyConversationParticipant,
-} = require("./conversation.service");
+const { verifyConversationParticipant } = require("./conversation.service");
 
-async function getMessagesService(
-  conversationId,
-  userId,
-) {
-  await verifyConversationParticipant(
-    conversationId,
-    userId,
-  );
+const { emitUnreadCountUpdated } = require("../socket");
+
+async function getMessagesService(conversationId, userId) {
+  await verifyConversationParticipant(conversationId, userId, true);
 
   return Message.find({
     conversation: conversationId,
   })
-    .populate(
-      "sender",
-      "name username profileImage",
-    )
+    .populate("sender", "name username profileImage")
     .sort({
       createdAt: 1,
     });
 }
 
-async function createMessageService(
-  conversationId,
-  senderId,
-  text,
-  imageUrl,
-) {
-  await verifyConversationParticipant(
+async function createMessageService(conversationId, senderId, text, imageUrl) {
+  const conversation = await verifyConversationParticipant(
     conversationId,
     senderId,
   );
@@ -45,13 +31,24 @@ async function createMessageService(
     seenBy: [senderId],
   });
 
-  await Conversation.findByIdAndUpdate(
-    conversationId,
-    {
-      lastMessage: message._id,
-      lastMessageAt: message.createdAt,
-    },
-  );
+  conversation.lastMessage = message._id;
+  conversation.lastMessageAt = message.createdAt;
+
+  conversation.participants.forEach((participant) => {
+    const participantId = participant.toString();
+
+    if (participantId === senderId.toString()) {
+      return;
+    }
+
+    const currentUnread = conversation.unreadCounts.get(participantId) || 0;
+
+    conversation.unreadCounts.set(participantId, currentUnread + 1);
+
+    emitUnreadCountUpdated(participantId);
+  });
+
+  await conversation.save();
 
   return Message.findById(message._id).populate(
     "sender",

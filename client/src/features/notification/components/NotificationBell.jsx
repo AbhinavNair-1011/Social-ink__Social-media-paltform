@@ -4,13 +4,14 @@ import NotificationDropdown from "./NotificationDropdown";
 
 import { useUnreadCount } from "../hooks/useUnreadCount";
 
-function NotificationBell() {
+function NotificationBell({unreadFeedCount}) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: unreadCount = 0 } = useUnreadCount();
+
+
 
   return (
-    <div className="relative">
+    <div className="">
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="relative rounded-full p-2 transition hover:bg-slate-100"
@@ -30,9 +31,9 @@ function NotificationBell() {
           />
         </svg>
 
-        {unreadCount > 0 && (
+        {unreadFeedCount > 0 && (
           <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">
-            {unreadCount > 99 ? "99+" : unreadCount}
+            {unreadFeedCount > 99 ? "99+" : unreadFeedCount}
           </span>
         )}
       </button>

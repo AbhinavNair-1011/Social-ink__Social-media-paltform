@@ -8,16 +8,5 @@ export function useMarkAllAsRead() {
   return useMutation({
     mutationFn: markAllAsRead,
 
-    onSuccess: () => {
-      queryClient.setQueryData(["notifications"], (oldNotifications = []) =>
-        oldNotifications.map((notification) => ({
-          ...notification,
-          isRead: true,
-        })),
-      );
-
-      queryClient.setQueryData(["notification-count"], 0);
-  
-    },
   });
 }

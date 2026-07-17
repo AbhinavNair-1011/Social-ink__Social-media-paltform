@@ -8,10 +8,9 @@ import { useInfiniteNotifications } from "../hooks/useInfiniteNotifications";
 function NotificationDropdown({ onClose }) {
   const { data } = useInfiniteNotifications({});
   const notifications = data?.pages?.flatMap((page) => page?.notifications) || [];
-  const { mutate: markAllAsRead } = useMarkAllAsRead();
 
   return (
-    <div className="absolute right-0 mt-3 w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+    <div className="absolute right-0 mt-3   w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
       <div className="flex items-center justify-between border-b border-slate-200 p-4">
         <h2 className="text-lg font-semibold">Notifications</h2>
 

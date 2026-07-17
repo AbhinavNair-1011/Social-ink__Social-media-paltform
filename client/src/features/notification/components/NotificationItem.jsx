@@ -2,33 +2,58 @@ import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 import { useMarkAsRead } from "../hooks/useMarkAsRead";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUnreadCount } from "../hooks/useUnreadCount";
 
-function NotificationItem({ notification, onClose= ()=>{} }) {
+function NotificationItem({ notification, onClose = () => {} }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { mutate: markAsRead } = useMarkAsRead();
+  const { data: unreadFeedCount } = useUnreadCount();
 
   function handleClick() {
-    if (!notification.isRead) {
-      markAsRead(notification._id);
-    }
+    markAsRead(notification._id, {
+      onSuccess: async (data) => {
 
-    onClose();
+        unreadFeedCount()
+        await queryClient.invalidateQueries({
+          queryKey: ["notification-count"],
+        });
 
-    if (notification.type === "follow") {
-      navigate(`/users/${notification.sender._id}`);
-      return;
-    }
+        await queryClient.invalidateQueries({
+          queryKey: ["notifications"],
+        });
 
-    
-    if (notification.type === "like" || notification.type === "comment") {
-      navigate(`/posts/${notification.post}`);
-    }
+        await queryClient.refetchQueries({
+          queryKey: ["notification-count"],
+          type: "active",
+        });
+
+        await queryClient.refetchQueries({
+          queryKey: ["notifications"],
+          type: "active",
+        });
+      },
+      onError:(error)=>{
+        console.log(error)
+      }
+    });
+
+      if (notification.type === "follow") {
+        navigate(`/users/${notification.sender._id}`);
+        return;
+      }
+
+      if (notification.type === "like" || notification.type === "comment") {
+        navigate(`/posts/${notification.post}`);
+      }
+      onClose()
   }
 
   return (
     <button
-      onClick={handleClick}
+      onClick={() => handleClick()}
       className={`flex w-full gap-3 m-2 border-b border-slate-200 p-4 text-left transition hover:bg-slate-50 ${
         !notification.isRead ? "bg-indigo-50" : ""
       }`}

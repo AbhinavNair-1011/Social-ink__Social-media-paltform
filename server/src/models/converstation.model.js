@@ -1,4 +1,4 @@
-const  mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
 const conversationSchema = new mongoose.Schema(
   {
@@ -19,6 +19,11 @@ const conversationSchema = new mongoose.Schema(
     lastMessageAt: {
       type: Date,
       default: Date.now,
+    },
+    unreadCounts: {
+      type: Map,
+      of: Number,
+      default: {},
     },
   },
   {

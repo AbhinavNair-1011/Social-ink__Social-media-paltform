@@ -1,10 +1,17 @@
+import { Link } from "react-router-dom";
+import { MessageCircle } from "lucide-react";
+
 import Logo from "./Logo";
 
-import { useLogout } from "../../features/auth/hooks/useLogout";
 import NotificationBell from "../../features/notification/components/NotificationBell";
 
+import { useUnreadConversationCount } from "../../features/chat/hooks/useUnreadConversationCount";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUnreadCount } from "../../features/notification/hooks/useUnreadCount";
+
 function Navbar({ onOpenSidebar }) {
-  const { mutate: logout, isPending } = useLogout();
+  const { data: unreadCount = 0 } = useUnreadConversationCount();
+  const { data: unreadFeedCount } = useUnreadCount();
 
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-b bg-white px-4 shadow-sm md:px-6">
@@ -32,44 +39,22 @@ function Navbar({ onOpenSidebar }) {
         <Logo />
       </div>
 
-<div className="flex">
-  <NotificationBell />
-   <button
-        onClick={() => logout()}
-        disabled={isPending}
-        className="flex items-center gap-2 rounded-lg bg-red-500 px-2 py-2 text-sm font-medium text-white transition hover:bg-red-600"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className="h-5 w-5"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M16 17l5-5-5-5"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 12H9"
-          />
-        </svg>
+      <div className="flex items-center gap-2">
+        <NotificationBell unreadFeedCount={unreadFeedCount} />
 
-        <span>
-          {isPending ? "Logging out..." : "Logout"}
-        </span>
-      </button>
-</div>
-   
+        <Link
+          to="/chat"
+          className="relative rounded-full p-2 text-slate-700 transition hover:bg-slate-100"
+        >
+          <MessageCircle className="h-6 w-6" />
+
+          {unreadCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </Link>
+      </div>
     </header>
   );
 }

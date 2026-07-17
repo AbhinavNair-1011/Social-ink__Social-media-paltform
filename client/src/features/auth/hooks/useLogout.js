@@ -25,4 +25,4 @@ function useLogout() {
   });
 }
 
-export { useLogout };
+export default useLogout ;

@@ -6,6 +6,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import AuthLayout from "../layouts/AuthLayout";
 import AppLayout from "../layouts/AppLayout";
 import LazyPage from "../../shared/components/LazyPage";
+import ChatPage from "../../features/chat/pages/ChatPage";
 
 
 const LoginPage = lazy(() => import("../../features/auth/pages/LoginPage"));
@@ -136,6 +137,10 @@ const router = createBrowserRouter([
             path: "/posts/:postId",
             element: <PostPage />,
           },
+          {
+            path:"/chat",
+            element:<ChatPage/>
+          }
         ],
       },
     ],

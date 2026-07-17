@@ -16,6 +16,10 @@ import { useUnfollow } from "../hooks/useUnfollow";
 import UserPosts from "../components/UserPosts";
 import FollowersList from "../components/FollowersList";
 import FollowingList from "../components/FollowingList";
+import Button from "../../../shared/components/Button";
+
+import { useNavigate } from "react-router-dom";
+import { useCreateConversation } from "../../chat/hooks/useCreateConversation";
 
 function UserProfilePage() {
   const { userId } = useParams();
@@ -29,6 +33,21 @@ function UserProfilePage() {
   const { mutate: unfollow } = useUnfollow();
   const [activeTab, setActiveTab] = useState("posts");
 
+  const navigate = useNavigate();
+
+  const { mutate: createConversation, isPending } = useCreateConversation();
+
+  function handleMessageUser() {
+    createConversation(userId, {
+      onSuccess: (conversation) => {
+        navigate("/chat", {
+          state: {
+            conversation,
+          },
+        });
+      },
+    });
+  }
   if (isLoading) {
     return <Loader />;
   }
@@ -79,17 +98,24 @@ function UserProfilePage() {
     });
   }
 
+
   if (data.isMe) {
     return <Navigate to="/profile" replace />;
   }
   return (
     <div className="">
       <ProfileHeader user={data.user}>
-        <FollowButton
-          isFollowing={data.isFollowing}
-          onFollow={handleFollow}
-          onUnfollow={handleUnfollow}
-        />
+        <div className=" flex justify-end  md:block">
+          <Button onClick={handleMessageUser} disabled={isPending}>
+            Message
+          </Button>
+
+          <FollowButton
+            isFollowing={data.isFollowing}
+            onFollow={handleFollow}
+            onUnfollow={handleUnfollow}
+          />
+        </div>
       </ProfileHeader>
 
       <ProfileStats

@@ -6,23 +6,6 @@ export function useMarkAsRead() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: markAsRead,
-
-    onSuccess: (_, notificationId) => {
-      queryClient.setQueryData(["notifications"], (oldNotifications = []) =>
-        oldNotifications.map((notification) =>
-          notification._id === notificationId
-            ? {
-                ...notification,
-                isRead: true,
-              }
-            : notification,
-        ),
-      );
-
-      queryClient.setQueryData(["notification-count"], (oldCount = 0) =>
-        Math.max(oldCount - 1, 0),
-      );
-    },
-  });
+    mutationFn: markAsRead
+})
 }
