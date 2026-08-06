@@ -1,11 +1,13 @@
-const Like = require("../models/like.model");
-const Post = require("../models/post.model");
-const { createNotification } = require("../services/notification.service");
-const AppError = require("../utils/appError");
-const uploadToS3 = require("../utils/uploadToS3");
-const { deleteNotification } = require("../services/notification.service");
-const { getIO } = require("../socket");
-const getPostRealtimeData = require("../services/post.service");
+  const likeRepository = require("../repositories/like.repository");
+  const postRepository = require("../repositories/post.repository");
+  const { createNotification } = require("../services/notification.service");
+  const AppError = require("../utils/appError");
+  const uploadToS3 = require("../utils/uploadToS3");
+  const { deleteNotification } = require("../services/notification.service");
+  const { getIO } = require("../socket");
+  const getPostRealtimeData = require("../services/post.service");
+
+
 async function createPost(req, res) {
   let image = "";
 
@@ -21,19 +23,17 @@ async function createPost(req, res) {
     );
   }
 
-  const post = await Post.create({
-    author: req.user.userId,
+  const post = await postRepository.createPost({
+    authorId: req.user.userId,
     content: req.body.content,
     imageUrl: image,
   });
 
   return res.status(201).json({
     success: true,
-
     data: {
       post,
     },
-
     error: null,
   });
 }
@@ -42,36 +42,18 @@ async function getPosts(req, res) {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 10;
 
-  const skip = (page - 1) * limit;
+  const totalPosts = await postRepository.countPosts();
 
-  const totalPosts = await Post.countDocuments();
-
-  const posts = await Post.find()
-    .populate("author", "name userName profileImage")
-    .sort({
-      createdAt: -1,
-    })
-    .skip(skip)
-    .limit(limit);
-
-  const likes = await Like.find({
+  const posts = await postRepository.getFeed({
     userId: req.user.userId,
-  }).select("postId");
-
-  const likedPostIds = likes.map((like) => like.postId.toString());
-
-  const formattedPosts = posts.map((post) => ({
-    ...post.toObject(),
-
-    isLikedByMe: likedPostIds.includes(post._id.toString()),
-
-    isOwner: post.author._id.toString() === req.user.userId,
-  }));
+    page,
+    limit,
+  });
 
   return res.status(200).json({
     success: true,
     data: {
-      posts: formattedPosts,
+      posts,
       currentPage: page,
       totalPages: Math.ceil(totalPosts / limit),
       totalPosts,
@@ -82,56 +64,14 @@ async function getPosts(req, res) {
 async function getPostById(req, res) {
   const { postId } = req.params;
 
-  const post = await Post.findById(postId).populate(
-    "author",
-    "name userName profileImage",
-  );
-
-  if (!post) {
-    throw new AppError("Post not found", 404, "NotFoundError");
-  }
-  const like = await Like.findOne({
+  const post = await postRepository.getPostById({
+    postId,
     userId: req.user.userId,
-    postId: post._id,
   });
-
-  const isLikedByMe = like ? true : false;
-
-  const isOwner = post.author._id.toString() === req.user.userId;
-
-  return res.status(200).json({
-    success: true,
-    data: {
-      post: {
-        ...post.toObject(),
-        isLikedByMe,
-        isOwner,
-      },
-    },
-    error: null,
-  });
-}
-
-async function updatePost(req, res) {
-  const { postId } = req.params;
-
-  const post = await Post.findById(postId);
 
   if (!post) {
     throw new AppError("Post not found", 404, "NotFoundError");
   }
-
-  if (post.author.toString() !== req.user.userId) {
-    throw new AppError(
-      "You are not authorized to update this post",
-      403,
-      "AuthorizationError",
-    );
-  }
-
-  post.content = req.body.content;
-
-  await post.save();
 
   return res.status(200).json({
     success: true,
@@ -142,16 +82,48 @@ async function updatePost(req, res) {
   });
 }
 
-async function deletePost(req, res) {
+async function updatePost(req, res) {
   const { postId } = req.params;
 
-  const post = await Post.findById(postId);
+  const post = await postRepository.findOwner(postId);
 
   if (!post) {
     throw new AppError("Post not found", 404, "NotFoundError");
   }
 
-  if (post.author.toString() !== req.user.userId) {
+  if (post.authorId !== req.user.userId) {
+    throw new AppError(
+      "You are not authorized to update this post",
+      403,
+      "AuthorizationError",
+    );
+  }
+
+  const updatedPost = await postRepository.updatePost({
+    postId,
+    userId: req.user.userId,
+    content: req.body.content,
+  });
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      post: updatedPost,
+    },
+    error: null,
+  });
+}
+
+ async function deletePost(req, res) {
+  const { postId } = req.params;
+
+  const post = await postRepository.findOwner(postId);
+
+  if (!post) {
+    throw new AppError("Post not found", 404, "NotFoundError");
+  }
+
+  if (post.authorId !== req.user.userId) {
     throw new AppError(
       "You are not authorized to delete this post",
       403,
@@ -159,8 +131,13 @@ async function deletePost(req, res) {
     );
   }
 
-  await post.deleteOne();
+  await postRepository.deletePost({
+    postId,
+    userId: req.user.userId,
+  });
+
   getIO().emit("post:deleted", postId);
+
   return res.status(200).json({
     success: true,
     data: null,
@@ -171,38 +148,37 @@ async function deletePost(req, res) {
 async function likePost(req, res) {
   const { postId } = req.params;
 
-  const post = await Post.findById(postId);
+  const post = await postRepository.findOwner(postId);
 
   if (!post) {
     throw new AppError("Post not found", 404, "NotFoundError");
   }
 
-  const existingLike = await Like.findOne({
-    userId: req.user.userId,
+  const alreadyLiked = await likeRepository.isLiked(
+    req.user.userId,
     postId,
-  });
+  );
 
-  if (existingLike) {
+  if (alreadyLiked) {
     throw new AppError("Post already liked", 409, "ConflictError");
   }
 
-  await Like.create({
-    userId: req.user.userId,
+  await likeRepository.likePost(
+    req.user.userId,
     postId,
-  });
-
-  post.likesCount += 1;
-
-  await post.save();
+  );
 
   await createNotification({
-    receiver: post.author,
+    receiver: post.authorId,
     sender: req.user.userId,
     type: "like",
-    post: post._id,
+    post: post.postId,
   });
 
-  const updatedPost = await getPostRealtimeData(post._id, req.user.userId);
+  const updatedPost = await getPostRealtimeData(
+    postId,
+    req.user.userId,
+  );
 
   getIO().emit("post:updated", updatedPost);
 
@@ -216,32 +192,41 @@ async function likePost(req, res) {
 async function unlikePost(req, res) {
   const { postId } = req.params;
 
-  const like = await Like.findOne({
-    userId: req.user.userId,
-    postId,
-  });
+  const post = await postRepository.findOwner(postId);
 
-  if (!like) {
-    throw new AppError("Like not found", 404, "NotFoundError");
+  if (!post) {
+    throw new AppError("Post not found", 404, "NotFoundError");
   }
 
-  await like.deleteOne();
+  const alreadyLiked = await likeRepository.isLiked(
+    req.user.userId,
+    postId,
+  );
 
-  const post = await Post.findByIdAndUpdate(postId, {
-    $inc: {
-      likesCount: -1,
-    },
-  });
+  if (!alreadyLiked) {
+    throw new AppError(
+      "Like not found",
+      404,
+      "NotFoundError",
+    );
+  }
+
+  await likeRepository.unlikePost(
+    req.user.userId,
+    postId,
+  );
 
   await deleteNotification({
-    receiver: post.author,
+    receiver: post.authorId,
     sender: req.user.userId,
     type: "like",
-    post: post._id,
+    post: post.postId,
   });
 
-  const updatedPost = await getPostRealtimeData(post._id, req.user.userId);
+  const updatedPost = await getPostRealtimeData(postId);
+
   getIO().emit("post:updated", updatedPost);
+
   return res.status(200).json({
     success: true,
     data: null,
@@ -253,50 +238,22 @@ async function getMyPosts(req, res) {
   const limit = Number(req.query.limit) || 12;
   const type = req.query.type || "all";
 
-  const skip = (page - 1) * limit;
+  const totalPosts = await postRepository.countUserPosts(
+    req.user.userId,
+    type,
+  );
 
-  const filter = {
-    author: req.user.userId,
-  };
-  if (type === "images") {
-    filter.imageUrl = {
-      $exists: true,
-      $ne: "",
-    };
-  }
-
-  if (type === "text") {
-    filter.$or = [
-      { imageUrl: { $exists: false } },
-      { imageUrl: null },
-      { imageUrl: "" },
-    ];
-  }
-
-  const totalPosts = await Post.countDocuments(filter);
-
-  const posts = await Post.find(filter)
-    .populate("author", "name userName profileImage")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const likes = await Like.find({
+  const posts = await postRepository.getMyPosts({
     userId: req.user.userId,
-  }).select("postId");
-
-  const likedPostIds = likes.map((like) => like.postId.toString());
-
-  const formattedPosts = posts.map((post) => ({
-    ...post.toObject(),
-    isOwner: true,
-    isLikedByMe: likedPostIds.includes(post._id.toString()),
-  }));
+    page,
+    limit,
+    type,
+  });
 
   return res.status(200).json({
     success: true,
     data: {
-      posts: formattedPosts,
+      posts,
       currentPage: page,
       totalPages: Math.ceil(totalPosts / limit),
       totalPosts,
@@ -307,57 +264,25 @@ async function getMyPosts(req, res) {
 async function getUserPosts(req, res) {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 12;
-
   const type = req.query.type || "all";
 
-  const skip = (page - 1) * limit;
+  const totalPosts = await postRepository.countUserPosts(
+    req.params.userId,
+    type,
+  );
 
-  const filter = {
-    author: req.params.userId,
-  };
-  if (type === "images") {
-    filter.imageUrl = {
-      $exists: true,
-      $ne: "",
-    };
-  }
-
-  if (type === "text") {
-    filter.$or = [
-      { imageUrl: { $exists: false } },
-      { imageUrl: null },
-      { imageUrl: "" },
-    ];
-  }
-
-  const totalPosts = await Post.countDocuments({
-    author: req.params.userId,
+  const posts = await postRepository.getUserPosts({
+    profileUserId: req.params.userId,
+    currentUserId: req.user.userId,
+    page,
+    limit,
+    type,
   });
-
-  const posts = await Post.find(filter)
-    .populate("author", "name userName profileImage")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
-
-  const likes = await Like.find({
-    userId: req.user.userId,
-  }).select("postId");
-
-  const likedPostIds = likes.map((like) => like.postId.toString());
-
-  const formattedPosts = posts.map((post) => ({
-    ...post.toObject(),
-
-    isOwner: post.author._id.toString() === req.user.userId,
-
-    isLikedByMe: likedPostIds.includes(post._id.toString()),
-  }));
 
   return res.status(200).json({
     success: true,
     data: {
-      posts: formattedPosts,
+      posts,
       currentPage: page,
       totalPages: Math.ceil(totalPosts / limit),
       totalPosts,
@@ -365,14 +290,15 @@ async function getUserPosts(req, res) {
     error: null,
   });
 }
-module.exports = {
+ module.exports={
   createPost,
-  getPosts,
-  getPostById,
-  updatePost,
-  deletePost,
-  likePost,
-  unlikePost,
-  getUserPosts,
-  getMyPosts,
-};
+      getPosts,
+    getPostById,
+    updatePost,
+    deletePost,
+    likePost,
+    unlikePost,
+    getUserPosts,
+    getMyPosts
+    
+  };

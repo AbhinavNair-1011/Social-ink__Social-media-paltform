@@ -1,7 +1,6 @@
-const Session = require("../models/session.model");
+const sessionRepository = require("../repositories/session.repository");
 
 const { generateAccessToken, generateRefreshToken } = require("../utils/jwt");
-
 const hashToken = require("../utils/hashToken");
 
 const {
@@ -10,31 +9,28 @@ const {
 } = require("../shared/cookieOptions");
 
 async function createAuthenticatedSession({ user, req, res }) {
-  const session = await Session.create({
-    userId: user._id,
-
+  const session = await sessionRepository.createSession({
+    userId: user.id,
     refreshTokenHash: "temporary",
-
     userAgent: req.headers["user-agent"],
-
     ipAddress: req.ip,
-
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   });
 
   const accessToken = generateAccessToken({
-    userId: user._id,
+    userId: user.id,
     email: user.email,
   });
 
   const refreshToken = generateRefreshToken({
-    userId: user._id,
-    sessionId: session._id,
+    userId: user.id,
+    sessionId: session.id,
   });
 
-  session.refreshTokenHash = hashToken(refreshToken);
-
-  await session.save();
+  await sessionRepository.updateRefreshTokenHash(
+    session.id,
+    hashToken(refreshToken),
+  );
 
   res.cookie("accessToken", accessToken, accessCookieOptions);
 
@@ -43,18 +39,19 @@ async function createAuthenticatedSession({ user, req, res }) {
 
 async function refreshAuthenticatedSession({ session, user, res }) {
   const accessToken = generateAccessToken({
-    userId: user._id,
+    userId: user.id,
     email: user.email,
   });
 
   const refreshToken = generateRefreshToken({
-    userId: user._id,
-    sessionId: session._id,
+    userId: user.id,
+    sessionId: session.id,
   });
 
-  session.refreshTokenHash = hashToken(refreshToken);
-
-  await session.save();
+  await sessionRepository.updateRefreshTokenHash(
+    session.id,
+    hashToken(refreshToken),
+  );
 
   res.cookie("accessToken", accessToken, accessCookieOptions);
 

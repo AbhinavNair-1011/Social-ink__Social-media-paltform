@@ -1,11 +1,7 @@
-const Post = require("../models/post.model");
+const postRepository = require("../repositories/post.repository");
 
-async function getPostRealtimeData(postId, currentUserId) {
-  const post = await Post.findById(postId).lean();
-
-
-
-  return post
+async function getPostRealtimeData(postId) {
+  return await postRepository.getPostRealtimeData(postId);
 }
 
-module.exports =getPostRealtimeData
+module.exports = getPostRealtimeData;

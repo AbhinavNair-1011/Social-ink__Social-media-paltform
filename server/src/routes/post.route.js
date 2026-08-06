@@ -24,7 +24,6 @@ const {
   getMyPosts,
   getUserPosts,
 } = require("../controllers/post.controller");
-const objectIdSchema = require("../validators/objectIdSchema");
 
 router.get("/", authMiddleware, validate(getPostsSchema, "query"), getPosts);
 

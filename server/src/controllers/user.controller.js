@@ -1,29 +1,28 @@
-const User = require("../models/user.model");
+const userRepository = require("../repositories/user.repository");
 const AppError = require("../utils/appError");
-const Follow = require("../models/follow.model");
-const Post = require("../models/post.model");
+const followRepository = require("../repositories/follow.repository");
+const postRepository = require("../repositories/post.repository");
 const uploadToS3 = require("../utils/uploadToS3");
 const { createNotification, deleteNotification } = require("../services/notification.service");
+
 async function getMyProfile(req, res) {
-  const user = await User.findById(req.user.userId).select(
-    "name email userName dob bio profileImage createdAt",
-  );
+  const user = await userRepository.findProfileById(req.user.userId);
 
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
   }
 
-  const postsCount = await Post.countDocuments({
-    author: req.user.userId,
-  });
+  const postsCount = await postRepository.countPostsByAuthor(
+    req.user.userId,
+  );
 
-  const followersCount = await Follow.countDocuments({
-    following: req.user.userId,
-  });
+  const followersCount = await followRepository.countFollowers(
+    req.user.userId,
+  );
 
-  const followingCount = await Follow.countDocuments({
-    follower: req.user.userId,
-  });
+  const followingCount = await followRepository.countFollowing(
+    req.user.userId,
+  );
 
   return res.status(200).json({
     success: true,
@@ -38,26 +37,27 @@ async function getMyProfile(req, res) {
 }
 
 async function updateMyProfile(req, res) {
-  const updatedUser = await User.findByIdAndUpdate(req.user.userId, req.body, {
-    new: true,
-    runValidators: true,
-  }).select("name email userName dob bio profileImage createdAt");
+  console.log(req.body)
+  const updatedUser = await userRepository.updateUser(
+    req.user.userId,
+    req.body,
+  );
 
   if (!updatedUser) {
     throw new AppError("User not found", 404, "NotFoundError");
   }
 
-  const postsCount = await Post.countDocuments({
-    author: req.user.userId,
-  });
+  const postsCount = await postRepository.countPostsByAuthor(
+    req.user.userId,
+  );
 
-  const followersCount = await Follow.countDocuments({
-    following: req.user.userId,
-  });
+  const followersCount = await followRepository.countFollowers(
+    req.user.userId,
+  );
 
-  const followingCount = await Follow.countDocuments({
-    follower: req.user.userId,
-  });
+  const followingCount = await followRepository.countFollowing(
+    req.user.userId,
+  );
 
   return res.status(200).json({
     success: true,
@@ -73,37 +73,27 @@ async function updateMyProfile(req, res) {
 async function getUserProfile(req, res) {
   const { userId } = req.params;
 
-  const user = await User.findById(userId).select(
-    "name userName bio profileImage createdAt",
-  );
-
+  const user = await userRepository.findPublicById(userId);
+console.log(userId)
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
   }
 
-  const postsCount = await Post.countDocuments({
-    author: userId,
-  });
+  const postsCount = await postRepository.countPostsByAuthor(userId);
 
-  const followersCount = await Follow.countDocuments({
-    following: userId,
-  });
+  const followersCount = await followRepository.countFollowers(userId);
 
-  const followingCount = await Follow.countDocuments({
-    follower: userId,
-  });
+  const followingCount = await followRepository.countFollowing(userId);
 
-  const isFollowing = Boolean(
-    await Follow.findOne({
-      follower: req.user.userId,
-      following: userId,
-    }),
+  const isFollowing = await followRepository.isFollowing(
+    req.user.userId,
+    userId,
   );
+console.log(user)
+  const isMe = user.id === req.user.userId;
 
-  const isMe = user._id.toString() === req.user.userId;
   return res.status(200).json({
     success: true,
-
     data: {
       user,
       postsCount,
@@ -112,11 +102,9 @@ async function getUserProfile(req, res) {
       isFollowing,
       isMe,
     },
-
     error: null,
   });
 }
-
 async function followUser(req, res) {
   const { userId } = req.params;
 
@@ -124,16 +112,14 @@ async function followUser(req, res) {
     throw new AppError("You cannot follow yourself", 400, "ValidationError");
   }
 
-  const user = await User.findById(userId);
+  const user = await userRepository.findById(userId);
 
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
   }
 
-  await Follow.create({
-    follower: req.user.userId,
-    following: userId,
-  });
+  await followRepository.followUser(req.user.userId, userId);
+
   await createNotification({
     receiver: userId,
     sender: req.user.userId,
@@ -149,10 +135,11 @@ async function followUser(req, res) {
 async function unfollowUser(req, res) {
   const { userId } = req.params;
 
-  await Follow.findOneAndDelete({
-    follower: req.user.userId,
-    following: userId,
-  });
+  await followRepository.unfollowUser(
+    req.user.userId,
+    userId,
+  );
+
   await deleteNotification({
     receiver: userId,
     sender: req.user.userId,
@@ -169,26 +156,10 @@ async function unfollowUser(req, res) {
 async function searchUsers(req, res) {
   const { search } = req.query;
 
-  const users = await User.find({
-    _id: { $ne: req.user.userId },
-
-    $or: [
-      {
-        name: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-      {
-        userName: {
-          $regex: search,
-          $options: "i",
-        },
-      },
-    ],
-  })
-    .select("name userName profileImage bio")
-    .limit(10);
+  const users = await userRepository.searchUsers(
+    req.user.userId,
+    search,
+  );
 
   return res.status(200).json({
     success: true,
@@ -199,27 +170,27 @@ async function searchUsers(req, res) {
   });
 }
 async function getFollowers(req, res) {
-  const followers = await Follow.find({
-    following: req.params.userId,
-  }).populate("follower", "name userName profileImage bio");
+  const followers = await followRepository.getFollowers(
+    req.params.userId,
+  );
 
   return res.status(200).json({
     success: true,
     data: {
-      followers: followers.map((item) => item.follower),
+      followers,
     },
     error: null,
   });
 }
 async function getFollowing(req, res) {
-  const following = await Follow.find({
-    follower: req.params.userId,
-  }).populate("following", "name userName profileImage bio");
+  const following = await followRepository.getFollowing(
+    req.params.userId,
+  );
 
   return res.status(200).json({
     success: true,
     data: {
-      following: following.map((item) => item.following),
+      following,
     },
     error: null,
   });
@@ -232,26 +203,20 @@ async function uploadProfileImage(req, res) {
 
   const imageUrl = await uploadToS3(req.file);
 
-  const user = await User.findByIdAndUpdate(
+  const user = await userRepository.updateProfileImage(
     req.user.userId,
-    {
-      profileImage: imageUrl,
-    },
-    {
-      new: true,
-    },
-  ).select("name email userName dob bio profileImage createdAt");
+    imageUrl,
+  );
 
   return res.status(200).json({
     success: true,
-
     data: {
       user,
     },
-
     error: null,
   });
 }
+
 
 module.exports = {
   getMyProfile,

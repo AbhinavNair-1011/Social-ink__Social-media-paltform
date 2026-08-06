@@ -22,7 +22,7 @@ const updateCommentSchema = z
 
 const commentIdSchema = z
   .object({
-    commentId: z.string().trim(),
+    commentId: z.string().uuid(),
   })
   .strict();
 

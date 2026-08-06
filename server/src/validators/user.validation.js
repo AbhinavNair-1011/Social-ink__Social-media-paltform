@@ -1,5 +1,4 @@
 const { z } = require("zod");
-const objectIdSchema = require("./objectIdSchema")
 
 const updateProfileSchema = z
   .object({
@@ -27,13 +26,13 @@ const updateProfileSchema = z
       .max(250, "Bio cannot exceed 250 characters")
       .optional(),
 
-    dob: z.coerce.date().optional(),
+    dob: z.union([z.coerce.date(), z.literal("")]).optional(),
   })
   .strict();
 
 const userIdSchema = z
   .object({
-    userId: objectIdSchema,
+   userId: z.string().uuid()
   })
   .strict();
 

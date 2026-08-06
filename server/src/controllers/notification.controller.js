@@ -1,23 +1,21 @@
-const Notification = require("../models/notification.model");
+const notificationRepository = require("../repositories/notification.repository");
+
 
 async function getNotifications(req, res) {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 20;
 
-  const skip = (page - 1) * limit;
+  const totalNotifications =
+    await notificationRepository.countNotifications(
+      req.user.userId,
+    );
 
-  const totalNotifications = await Notification.countDocuments({
-    receiver: req.user.userId,
-  });
-
-  const notifications = await Notification.find({
-    receiver: req.user.userId,
-  })
-    .populate("sender", "name userName profileImage createdAt")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
+  const notifications =
+    await notificationRepository.getNotifications(
+      req.user.userId,
+      page,
+      limit,
+    );
 
   return res.status(200).json({
     success: true,
@@ -32,18 +30,11 @@ async function getNotifications(req, res) {
 }
 
 async function markAsRead(req, res) {
-  const notification = await Notification.findOneAndUpdate(
-    {
-      _id: req.params.notificationId,
-      receiver: req.user.userId,
-    },
-    {
-      isRead: true,
-    },
-    {
-      new: true,
-    },
-  );
+  const notification =
+    await notificationRepository.markAsRead(
+      req.params.notificationId,
+      req.user.userId,
+    );
 
   return res.status(200).json({
     success: true,
@@ -53,15 +44,10 @@ async function markAsRead(req, res) {
     error: null,
   });
 }
+
 async function markAllAsRead(req, res) {
-  await Notification.updateMany(
-    {
-      receiver: req.user.userId,
-      isRead: false,
-    },
-    {
-      isRead: true,
-    },
+  await notificationRepository.markAllAsRead(
+    req.user.userId,
   );
 
   return res.status(200).json({
@@ -70,11 +56,12 @@ async function markAllAsRead(req, res) {
     error: null,
   });
 }
+
 async function getUnreadCount(req, res) {
-  const unreadCount = await Notification.countDocuments({
-    receiver: req.user.userId,
-    isRead: false,
-  });
+  const unreadCount =
+    await notificationRepository.countUnreadNotifications(
+      req.user.userId,
+    );
 
   return res.status(200).json({
     success: true,

@@ -41,16 +41,16 @@ function ConversationCard({
               {otherUser.name}
             </h3>
 
-            {conversation.lastMessageAt && (
+            {/* {conversation.lastMessageAt && (
               <span className="text-xs text-slate-500">
                 {format(new Date(conversation.lastMessageAt), "hh:mm a")}
               </span>
-            )}
+            )} */}
           </div>
 
-          <p className="truncate text-sm text-slate-500 text-start ">
+          {/* <p className="truncate text-sm text-slate-500 text-start ">
             {conversation.lastMessage?.text || "Start chatting"}
-          </p>
+          </p> */}
         </div>
       </div>
     </button>

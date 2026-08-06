@@ -2,7 +2,7 @@ const { z } = require("zod");
 
 const createMessageSchema = z
   .object({
-    conversationId: z.string(),
+    conversationId: z.string().uuid(),
 
     text: z.string().trim().optional(),
 

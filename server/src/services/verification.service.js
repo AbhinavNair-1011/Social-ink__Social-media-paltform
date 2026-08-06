@@ -1,11 +1,10 @@
-const Verification = require("../models/verification.model");
+const verificationRepository = require("../repositories/verification.repository");
 
 const generateVerificationCode = require("../utils/generateVerificationCode");
-
 const hashToken = require("../utils/hashToken");
 
 async function createVerification({ userId, purpose }) {
-  await Verification.deleteMany({
+  await verificationRepository.deleteMany({
     userId,
     purpose,
   });
@@ -14,9 +13,8 @@ async function createVerification({ userId, purpose }) {
 
   const codeHash = hashToken(code);
 
-  await Verification.create({
+  await verificationRepository.createVerification({
     userId,
-
     purpose,
     codeHash,
     expiresAt: new Date(Date.now() + 10 * 60 * 1000),

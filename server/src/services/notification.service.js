@@ -1,4 +1,5 @@
-const Notification = require("../models/notification.model");
+const notificationRepository = require("../repositories/notification.repository");
+const userRepository = require("../repositories/user.repository");
 
 const { getIO } = require("../socket");
 
@@ -9,37 +10,45 @@ async function createNotification({
   post = null,
   comment = null,
 }) {
-  if (receiver.toString() === sender.toString()) {
+  if (receiver === sender) {
     return;
   }
 
-  const existingNotification = await Notification.findOne({
-    receiver,
-    sender,
-    type,
-    post,
-    comment,
-  });
+  const existingNotification =
+    await notificationRepository.findNotification({
+      receiver,
+      sender,
+      type,
+      post,
+      comment,
+    });
 
   if (existingNotification) {
     return existingNotification;
   }
 
-  const notification = await Notification.create({
-    receiver,
-    sender,
-    type,
-    post,
-    comment,
-  });
+  const notification =
+    await notificationRepository.createNotification({
+      receiver,
+      sender,
+      type,
+      post,
+      comment,
+    });
 
-  await notification.populate("sender", "name userName profileImage");
+  const senderUser = await userRepository.findPublicById(sender);
 
-  getIO().to(receiver.toString()).emit("notification:new", notification);
+  notification.sender = {
+    _id: senderUser.id,
+    name: senderUser.name,
+    userName: senderUser.userName,
+    profileImage: senderUser.profileImage,
+  };
+
+  getIO().to(receiver).emit("notification:new", notification);
 
   return notification;
 }
-
 
 async function deleteNotification({
   receiver,
@@ -48,17 +57,21 @@ async function deleteNotification({
   post = null,
   comment = null,
 }) {
-  const notification = await Notification.findOneAndDelete({
-    receiver,
-    sender,
-    type,
-    post,
-    comment,
-  });
+  const notificationId =
+    await notificationRepository.deleteNotification({
+      receiver,
+      sender,
+      type,
+      post,
+      comment,
+    });
 
-  if (!notification) return;
+  if (!notificationId) return;
 
-  getIO().to(receiver.toString()).emit("notification:delete", notification._id);
+  getIO().to(receiver).emit(
+    "notification:delete",
+    notificationId,
+  );
 }
 
 module.exports = {

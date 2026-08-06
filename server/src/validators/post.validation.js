@@ -21,7 +21,7 @@ const getPostsSchema = z
 
   const postIdSchema = z
   .object({
-    postId: z.string().trim(),
+    postId: z.string().uuid()
   })
   .strict();
 

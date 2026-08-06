@@ -1,8 +1,11 @@
 const bcrypt = require("bcryptjs");
 
-const User = require("../models/user.model");
+const userRepository = require("../repositories/user.repository");
 
-const Session = require("../models/session.model");
+const sessionRepository = require("../repositories/session.repository");
+const verificationRepository = require("../repositories/verification.repository");
+const { createVerification } = require("../services/verification.service");
+const crypto = require("crypto");
 
 const AppError = require("../utils/appError");
 
@@ -12,9 +15,6 @@ const {
 } = require("../services/auth.service");
 
 const { verifyToken } = require("../utils/jwt");
-const Verification = require("../models/verification.model");
-
-const { createVerification } = require("../services/verification.service");
 
 const { sendEmail } = require("../services/email.service");
 const hashToken = require("../utils/hashToken");
@@ -26,7 +26,7 @@ const {
 async function register(req, res) {
   const { name, email, password, userName, dob, twoFactorEnabled } = req.body;
 
-  const existingEmail = await User.findOne({ email });
+  const existingEmail = await userRepository.findByEmail(email);
 
   if (existingEmail && !existingEmail.isEmailVerified) {
     throw new AppError("Please verify your email first.", 403, "verifyEmail");
@@ -38,9 +38,7 @@ async function register(req, res) {
     );
   }
 
-  const existingUsername = await User.findOne({
-    userName,
-  });
+  const existingUsername = await userRepository.findByUserName(userName);
 
   if (existingUsername) {
     throw new AppError("Username already exists", 409, "ConflictError");
@@ -48,7 +46,7 @@ async function register(req, res) {
 
   const hashedPassword = await bcrypt.hash(password, 3);
 
-  const user = await User.create({
+  const user = await userRepository.createUser({
     name,
     email,
     password: hashedPassword,
@@ -56,9 +54,8 @@ async function register(req, res) {
     dob,
     twoFactorEnabled,
   });
-
   const code = await createVerification({
-    userId: user._id,
+    userId: user.id,
     purpose: "email-verification",
   });
 
@@ -88,8 +85,7 @@ async function register(req, res) {
 async function login(req, res) {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-
+  const user = await userRepository.findByEmail(email);
   if (!user) {
     throw new AppError("Invalid credentials", 401, "AuthenticationError");
   }
@@ -105,7 +101,7 @@ async function login(req, res) {
 
   if (user.twoFactorEnabled) {
     const code = await createVerification({
-      userId: user._id,
+      userId: user.id,
       purpose: "login-2fa",
     });
 
@@ -156,23 +152,29 @@ async function login(req, res) {
 
 async function refresh(req, res) {
   const refreshToken = req.cookies.refreshToken;
+
   if (!refreshToken) {
     throw new AppError("Refresh token missing", 401, "AuthenticationError");
   }
 
-  const decoded = verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+  const decoded = verifyToken(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET,
+  );
 
-  const session = await Session.findById(decoded.sessionId);
+  const session = await sessionRepository.findById(decoded.sessionId);
+
   if (!session) {
     throw new AppError("Session not found", 401, "AuthenticationError");
   }
+
   const incomingTokenHash = hashToken(refreshToken);
 
   if (incomingTokenHash !== session.refreshTokenHash) {
     throw new AppError("Invalid refresh token", 401, "AuthenticationError");
   }
 
-  const user = await User.findById(decoded.userId);
+  const user = await userRepository.findById(decoded.userId);
 
   if (!user) {
     throw new AppError("User not found", 401, "AuthenticationError");
@@ -200,7 +202,7 @@ async function logout(req, res, next) {
 
   const decoded = verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-  await Session.findByIdAndDelete(decoded.sessionId);
+  await sessionRepository.deleteById(decoded.sessionId);
 
   res.clearCookie("accessToken", accessCookieOptions);
 
@@ -216,16 +218,13 @@ async function logout(req, res, next) {
 async function forgotPassword(req, res) {
   const { email } = req.body;
 
-  const user = await User.findOne({
-    email,
-  });
-
+  const user = await userRepository.findByEmail(email);
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
   }
 
   const code = await createVerification({
-    userId: user._id,
+    userId: user.id,
     purpose: "forgot-password",
   });
 
@@ -243,13 +242,12 @@ async function forgotPassword(req, res) {
     error: null,
   });
 }
-
 async function resetPassword(req, res) {
   const { code, password } = req.body;
 
   const codeHash = hashToken(code);
 
-  const verification = await Verification.findOne({
+  const verification = await verificationRepository.findVerification({
     codeHash,
     purpose: "forgot-password",
   });
@@ -262,21 +260,16 @@ async function resetPassword(req, res) {
     );
   }
 
-  const user = await User.findById(verification.userId);
+  const user = await userRepository.findById(verification.userId);
 
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
   }
 
-  user.password = await bcrypt.hash(password, 10);
+  await userRepository.updatePassword(user.id, await bcrypt.hash(password, 10));
 
-  await user.save();
-
-  await Verification.findByIdAndDelete(verification._id);
-
-  await Session.deleteMany({
-    userId: user._id,
-  });
+  await verificationRepository.deleteById(verification.id);
+  await sessionRepository.deleteByUserId(user.id);
 
   res.clearCookie("accessToken", accessCookieOptions);
 
@@ -288,11 +281,10 @@ async function resetPassword(req, res) {
     error: null,
   });
 }
-
 async function changePassword(req, res) {
   const { currentPassword, newPassword } = req.body;
 
-  const user = await User.findById(req.user.userId);
+  const user = await userRepository.findById(req.user.userId);
 
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
@@ -311,13 +303,12 @@ async function changePassword(req, res) {
     );
   }
 
-  user.password = await bcrypt.hash(newPassword, 10);
+  await userRepository.updatePassword(
+    user.id,
+    await bcrypt.hash(newPassword, 10),
+  );
 
-  await user.save();
-
-  await Session.deleteMany({
-    userId: user._id,
-  });
+  await sessionRepository.deleteByUserId(user.id);
 
   res.clearCookie("accessToken", accessCookieOptions);
 
@@ -331,9 +322,7 @@ async function changePassword(req, res) {
 }
 
 async function logoutAll(req, res) {
-  await Session.deleteMany({
-    userId: req.user.userId,
-  });
+  await sessionRepository.deleteById(decoded.sessionId);
 
   res.clearCookie("accessToken", accessCookieOptions);
 
@@ -349,7 +338,7 @@ async function logoutAll(req, res) {
 async function sendEmailVerification(req, res) {
   const { email } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await userRepository.findByEmail(email);
 
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
@@ -360,7 +349,7 @@ async function sendEmailVerification(req, res) {
   }
 
   const code = await createVerification({
-    userId: user._id,
+    userId: user.id,
     purpose: "email-verification",
   });
 
@@ -381,11 +370,10 @@ async function sendEmailVerification(req, res) {
     error: null,
   });
 }
-
 async function verifyEmail(req, res) {
   const { email, code } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await userRepository.findByEmail(email);
 
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
@@ -393,12 +381,11 @@ async function verifyEmail(req, res) {
 
   const codeHash = hashToken(code);
 
-  const verification = await Verification.findOne({
-    userId: user._id,
-    purpose: "email-verification",
-    codeHash,
-  });
-
+  const verification = await verificationRepository.findVerificationByUser({
+  userId: user.id,
+  purpose: "email-verification",
+  codeHash,
+});
   if (!verification) {
     throw new AppError(
       "Invalid or expired verification code",
@@ -407,11 +394,9 @@ async function verifyEmail(req, res) {
     );
   }
 
-  user.isEmailVerified = true;
+  await userRepository.verifyEmail(user.id);
 
-  await user.save();
-
-  await verification.deleteOne();
+await verificationRepository.deleteById(verification.id);
 
   return res.status(200).json({
     success: true,
@@ -423,9 +408,7 @@ async function verifyEmail(req, res) {
 async function changeEmail(req, res) {
   const { oldEmail, newEmail } = req.body;
 
-  const user = await User.findOne({
-    email: oldEmail,
-  });
+  const user = await userRepository.findByEmail(oldEmail);
 
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
@@ -435,27 +418,21 @@ async function changeEmail(req, res) {
     throw new AppError("Email is already verified", 409, "ConflictError");
   }
 
-  const existingUser = await User.findOne({
-    email: newEmail,
-  });
+  const existingUser = await userRepository.findByEmail(newEmail);
 
   if (existingUser) {
     throw new AppError("Email already exists", 409, "ConflictError");
   }
 
-  user.email = newEmail;
+  await userRepository.changeEmail(user.id, newEmail);
 
-  user.isEmailVerified = false;
-
-  await user.save();
-
-  await Verification.deleteMany({
-    userId: user._id,
-    purpose: "email-verification",
-  });
+  await verificationRepository.deleteMany({
+  userId: user.id,
+  purpose: "email-verification",
+});
 
   const code = await createVerification({
-    userId: user._id,
+    userId: user.id,
     purpose: "email-verification",
   });
 
@@ -477,13 +454,10 @@ async function changeEmail(req, res) {
     error: null,
   });
 }
-
 async function verifyTwoFactor(req, res) {
   const { email, code } = req.body;
 
-  const user = await User.findOne({
-    email,
-  });
+  const user = await userRepository.findByEmail(email);
 
   if (!user) {
     throw new AppError("User not found", 404, "NotFoundError");
@@ -491,11 +465,11 @@ async function verifyTwoFactor(req, res) {
 
   const codeHash = hashToken(code);
 
-  const verification = await Verification.findOne({
-    userId: user._id,
-    purpose: "login-2fa",
-    codeHash,
-  });
+  const verification = await verificationRepository.findVerificationByUser({
+  userId: user.id,
+  purpose: "login-2fa",
+  codeHash,
+});
 
   if (!verification) {
     throw new AppError(
@@ -505,8 +479,7 @@ async function verifyTwoFactor(req, res) {
     );
   }
 
-  await verification.deleteOne();
-
+await verificationRepository.deleteById(verification.id);
   await createAuthenticatedSession({
     user,
     req,

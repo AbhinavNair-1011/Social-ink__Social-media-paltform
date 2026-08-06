@@ -1,4 +1,4 @@
-const Conversation = require("../models/converstation.model");
+const conversationRepository = require("../repositories/conversation.repository");
 const AppError = require("../utils/appError");
 
 async function createConversationService(myId, otherUserId) {
@@ -10,50 +10,29 @@ async function createConversationService(myId, otherUserId) {
     );
   }
 
-  let conversation = await Conversation.findOne({
-    participants: {
-      $all: [myId, otherUserId],
-    },
-    $expr: {
-      $eq: [{ $size: "$participants" }, 2],
-    },
-  });
+  let conversation =
+    await conversationRepository.findConversationBetweenUsers(
+      myId,
+      otherUserId,
+    );
 
   if (conversation) {
     return conversation;
   }
 
-  conversation = await Conversation.create({
-    participants: [myId, otherUserId],
-    unreadCounts: {
-      [myId]: 0,
-      [otherUserId]: 0,
-    },
-  });
+  conversation =
+    await conversationRepository.createConversation(
+      myId,
+      otherUserId,
+    );
 
   return conversation;
 }
 
 async function getMyConversationsService(userId) {
-  const conversations = await Conversation.find({
-    participants: userId,
-  })
-    .populate("participants", "name username profileImage")
-    .populate({
-      path: "lastMessage",
-      populate: {
-        path: "sender",
-        select: "name username profileImage",
-      },
-    })
-    .sort({
-      lastMessageAt: -1,
-    });
-
-  return conversations.map((conversation) => ({
-    ...conversation.toObject(),
-    unreadCount: conversation.unreadCounts?.get(userId.toString()) || 0,
-  }));
+  return await conversationRepository.getMyConversations(
+    userId,
+  );
 }
 
 async function verifyConversationParticipant(
@@ -61,26 +40,24 @@ async function verifyConversationParticipant(
   userId,
   markAsRead = false,
 ) {
-  const conversation = await Conversation.findOne({
-    _id: conversationId,
-    participants: userId,
-  });
+  const conversation =
+    await conversationRepository.findConversationById(
+      conversationId,
+      userId,
+    );
 
   if (!conversation) {
-    throw new AppError("Conversation not found.", 404, "NotFoundError");
+    throw new AppError(
+      "Conversation not found.",
+      404,
+      "NotFoundError",
+    );
   }
 
   if (markAsRead) {
-    await Conversation.updateOne(
-      {
-        _id: conversationId,
-        participants: userId,
-      },
-      {
-        $set: {
-          [`unreadCounts.${userId}`]: 0,
-        },
-      },
+    await conversationRepository.markConversationAsRead(
+      conversationId,
+      userId,
     );
   }
 

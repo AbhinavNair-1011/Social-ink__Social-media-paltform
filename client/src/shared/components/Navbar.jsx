@@ -40,19 +40,19 @@ function Navbar({ onOpenSidebar }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <NotificationBell unreadFeedCount={unreadFeedCount} />
+        {/* <NotificationBell unreadFeedCount={unreadFeedCount} /> */}
 
         <Link
           to="/chat"
           className="relative rounded-full p-2 text-slate-700 transition hover:bg-slate-100"
         >
-          <MessageCircle className="h-6 w-6" />
+          {/* <MessageCircle className="h-6 w-6" /> */}
 
-          {unreadCount > 0 && (
+          {/* {unreadCount > 0 && (
             <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-semibold text-white">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
-          )}
+          )} */}
         </Link>
       </div>
     </header>

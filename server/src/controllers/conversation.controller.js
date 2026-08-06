@@ -3,7 +3,7 @@ const {
   getMyConversationsService,
 } = require("../services/conversation.service");
 
-const Conversation = require("../models/converstation.model");
+const conversationRepository = require("../repositories/conversation.repository");
 
 async function createConversation(req, res) {
   const conversation = await createConversationService(
@@ -20,8 +20,9 @@ async function createConversation(req, res) {
 }
 
 async function getMyConversations(req, res) {
-  const conversations =
-    await getMyConversationsService(req.user.userId);
+  const conversations = await getMyConversationsService(
+    req.user.userId,
+  );
 
   return res.status(200).json({
     status: "success",
@@ -32,16 +33,10 @@ async function getMyConversations(req, res) {
 }
 
 async function getUnreadConversationCount(req, res) {
-  const conversations = await Conversation.find({
-    participants: req.user.userId,
-  }).select("unreadCounts");
-
-  const unreadCount = conversations.filter(
-    (conversation) =>
-      (conversation.unreadCounts?.get(
-        req.user.userId.toString(),
-      ) || 0) > 0,
-  ).length;
+  const unreadCount =
+    await conversationRepository.countUnreadConversations(
+      req.user.userId,
+    );
 
   return res.status(200).json({
     status: "success",
