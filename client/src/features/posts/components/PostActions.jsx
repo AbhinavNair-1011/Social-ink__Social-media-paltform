@@ -53,7 +53,7 @@ function PostActions({
 
   return (
     <div className="mt-4 flex items-center gap-6 border-t border-slate-100 pt-3">
-      <button
+      {/* <button
         onClick={handleLike}
         className={`flex items-center gap-2 text-sm font-medium transition ${
           post.isLikedByMe
@@ -77,7 +77,7 @@ function PostActions({
         </svg>
 
         <span>{post.likesCount}</span>
-      </button>
+      </button> */}
 
       <button
         onClick={() => setShowComments((prev) => !prev)}

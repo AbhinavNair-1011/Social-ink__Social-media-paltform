@@ -96,19 +96,23 @@ async function getFeed({
 
     const result = await session.run(
       `
-      MATCH (author:User)-[:CREATED]->(p:Post)
+    MATCH (author:User)-[:CREATED]->(p:Post)
 
-      OPTIONAL MATCH (liker:User {id: $userId})-[l:LIKED]->(p)
+OPTIONAL MATCH (:User {id:$userId})-[l:LIKED]->(p)
 
-      RETURN
-      p,
-      author,
-      COUNT(l) > 0 AS isLikedByMe
+WITH
+  p,
+  author,
+  COUNT(l) AS likeCount
 
-      ORDER BY p.createdAt DESC
+RETURN
+  p,
+  author,
+  likeCount > 0 AS isLikedByMe
 
-      SKIP $skip
-      LIMIT $limit
+ORDER BY p.createdAt DESC
+SKIP $skip
+LIMIT $limit
       `,
       {
         userId,
